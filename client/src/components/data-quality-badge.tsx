@@ -1,8 +1,8 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CircleCheck, TriangleAlert, CircleAlert, CircleX } from "lucide-react";
+import { CircleCheck, TriangleAlert, CircleAlert, CircleX, Pencil } from "lucide-react";
 
-export type DataQuality = "regional" | "state_proxy" | "national_proxy" | "none";
+export type DataQuality = "regional" | "state_proxy" | "national_proxy" | "estimate" | "none";
 
 const CONFIG: Record<DataQuality, { label: string; icon: typeof CircleCheck; className: string }> = {
   regional: {
@@ -19,6 +19,11 @@ const CONFIG: Record<DataQuality, { label: string; icon: typeof CircleCheck; cla
     label: "National proxy",
     icon: CircleAlert,
     className: "bg-[hsl(var(--chart-3))]/15 text-[hsl(var(--chart-3))] border-[hsl(var(--chart-3))]/30",
+  },
+  estimate: {
+    label: "Owner estimate — placeholder",
+    icon: Pencil,
+    className: "bg-[hsl(var(--chart-5))]/15 text-[hsl(var(--chart-5))] border-[hsl(var(--chart-5))]/30",
   },
   none: {
     label: "No data — survey needed",

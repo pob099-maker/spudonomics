@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Region, CostProfile, InsertCostProfile } from "@shared/schema";
+import { DATA_QUALITY_LABELS } from "@shared/schema";
 import { apiRequest, queryClient, setAdminToken, getAdminToken } from "@/lib/queryClient";
 import {
   Table,
@@ -192,6 +193,7 @@ export default function Admin() {
       {editing && (
         <EditProfileDialog
           profile={editing}
+          region={regionById.get(editing.regionId)}
           onClose={() => setEditing(null)}
         />
       )}
@@ -380,17 +382,32 @@ function AdminUnlockGate({ unlocked, onUnlocked }: { unlocked: boolean; onUnlock
   );
 }
 
-function EditProfileDialog({ profile, onClose }: { profile: CostProfile; onClose: () => void }) {
+function EditProfileDialog({
+  profile,
+  region,
+  onClose,
+}: {
+  profile: CostProfile;
+  region?: Region;
+  onClose: () => void;
+}) {
   const { toast } = useToast();
   const [form, setForm] = useState<CostProfile>(profile);
+  const [syncRegionQuality, setSyncRegionQuality] = useState(
+    !!region && (region.dataQuality === "none" || region.dataQuality === profile.dataQuality)
+  );
 
   const mutation = useMutation({
     mutationFn: async (patch: Partial<InsertCostProfile>) => {
       const res = await apiRequest("PATCH", `/api/cost-profiles/${profile.id}`, patch);
+      if (region && syncRegionQuality && patch.dataQuality) {
+        await apiRequest("PATCH", `/api/regions/${region.id}`, { dataQuality: patch.dataQuality });
+      }
       return res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cost-profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/regions"] });
       toast({ title: "Profile updated", description: `${profile.segmentLabel} saved with new source data.` });
       onClose();
     },
@@ -449,10 +466,35 @@ function EditProfileDialog({ profile, onClose }: { profile: CostProfile; onClose
                 <SelectItem value="regional">Regional data</SelectItem>
                 <SelectItem value="state_proxy">State proxy</SelectItem>
                 <SelectItem value="national_proxy">National proxy</SelectItem>
+                <SelectItem value="estimate">Owner estimate — placeholder</SelectItem>
                 <SelectItem value="none">No data — survey needed</SelectItem>
               </SelectContent>
             </Select>
+            {form.dataQuality === "estimate" && (
+              <p className="text-xs text-muted-foreground">
+                These are your own best-guess figures, not a published source — leave the source fields
+                blank or note who supplied the guess. Swap this row for real survey data any time by editing
+                it again and changing the quality back to Regional data.
+              </p>
+            )}
           </div>
+          {region && (
+            <div className="flex items-center gap-2 rounded-md border border-card-border bg-muted/40 p-3">
+              <input
+                id="admin-sync-region-quality"
+                type="checkbox"
+                className="h-4 w-4 accent-[hsl(var(--chart-5))]"
+                checked={syncRegionQuality}
+                onChange={(e) => setSyncRegionQuality(e.target.checked)}
+                data-testid="admin-checkbox-sync-region"
+              />
+              <Label htmlFor="admin-sync-region-quality" className="text-xs text-muted-foreground cursor-pointer">
+                Also update the <span className="font-medium">{region.name}</span> region badge to match this
+                profile's data quality (currently <span className="font-medium">{DATA_QUALITY_LABELS[region.dataQuality] ?? region.dataQuality}</span>).
+                This is what removes the "No verified data" warning on the Calculator page.
+              </Label>
+            </div>
+          )}
 
           <div className="grid sm:grid-cols-2 gap-3">
             <div className="space-y-1">

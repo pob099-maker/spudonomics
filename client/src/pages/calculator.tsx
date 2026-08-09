@@ -38,7 +38,7 @@ import {
   REFERENCE_DIESEL_USE,
   DIESEL_EMISSION_FACTOR,
 } from "@/lib/lifecycle-factors";
-import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon, Sprout, ExternalLink, Leaf } from "lucide-react";
+import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon, Sprout, ExternalLink, Leaf, Pencil } from "lucide-react";
 
 type FieldKey =
   | "yieldTHa"
@@ -286,6 +286,7 @@ export default function Calculator() {
   };
 
   const isNoData = region?.dataQuality === "none";
+  const isEstimate = region?.dataQuality === "estimate";
   const noCostBreakdown = !!selectedProfile && hasNoCostBreakdown(selectedProfile);
 
   if (regionsLoading) {
@@ -404,6 +405,20 @@ export default function Calculator() {
               data specific to this district anywhere in the public record. Treat every figure below as a
               rough starting point only, and replace it with your own numbers. This is exactly the kind of
               gap a Hort Innovation / Lifecycles grower survey could close.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {isEstimate && (
+        <div className="flex items-start gap-3 rounded-lg border border-[hsl(var(--chart-5))]/40 bg-[hsl(var(--chart-5))]/10 p-4">
+          <Pencil className="h-5 w-5 text-[hsl(var(--chart-5))] shrink-0 mt-0.5" />
+          <div className="text-sm space-y-1">
+            <p className="font-medium text-[hsl(var(--chart-5))]">Owner estimate — not a verified source</p>
+            <p className="text-muted-foreground">
+              These figures were typed in directly by the PotatoLink team as a placeholder best-guess, not
+              taken from a published source. Useful for getting a working number now — swap them out with
+              real grower/agronomist survey data as soon as it's available (see the Admin page).
             </p>
           </div>
         </div>

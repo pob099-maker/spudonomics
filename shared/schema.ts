@@ -84,5 +84,6 @@ export const DATA_QUALITY_LABELS: Record<string, string> = {
   regional: "Regional data",
   state_proxy: "State proxy",
   national_proxy: "National proxy",
+  estimate: "Owner estimate — placeholder",
   none: "No data — survey needed",
 };
