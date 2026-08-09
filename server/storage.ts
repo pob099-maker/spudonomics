@@ -1,89 +1,89 @@
-import { regions, costProfiles } from "@shared/schema";
 import type { Region, InsertRegion, CostProfile, InsertCostProfile } from "@shared/schema";
-import { drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
-import { eq } from "drizzle-orm";
-import { REGIONS, COST_PROFILES } from "./seed-data";
+import { supabase } from "./supabase";
 
-const sqlite = new Database("data.db");
-sqlite.pragma("journal_mode = WAL");
-
-export const db = drizzle(sqlite);
-
-// Create tables if they don't exist yet (no migration runner wired up — keep this simple and idempotent).
-sqlite.exec(`
-  CREATE TABLE IF NOT EXISTS regions (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    state TEXT NOT NULL,
-    sort_order INTEGER NOT NULL,
-    data_quality TEXT NOT NULL,
-    production_share TEXT,
-    summary TEXT
-  );
-  CREATE TABLE IF NOT EXISTS cost_profiles (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    region_id TEXT NOT NULL,
-    segment TEXT NOT NULL,
-    segment_label TEXT NOT NULL,
-    yield_t_ha REAL,
-    price_t REAL,
-    gross_income_ha REAL,
-    seed_cost_ha REAL,
-    fertiliser_cost_ha REAL,
-    crop_protection_cost_ha REAL,
-    irrigation_cost_ha REAL,
-    water_use_ml_ha REAL,
-    machinery_cost_ha REAL,
-    contract_cost_ha REAL,
-    labour_cost_ha REAL,
-    labour_rate_hr REAL,
-    post_harvest_cost_ha REAL,
-    overhead_pct REAL,
-    total_variable_cost_ha REAL,
-    gross_margin_ha REAL,
-    data_quality TEXT NOT NULL,
-    source_name TEXT,
-    source_url TEXT,
-    source_year TEXT,
-    notes TEXT
-  );
-`);
-
-function seedIfEmpty() {
-  const regionCount = (sqlite.prepare("SELECT COUNT(*) as c FROM regions").get() as { c: number }).c;
-  if (regionCount === 0) {
-    const insertRegion = sqlite.prepare(
-      `INSERT INTO regions (id, name, state, sort_order, data_quality, production_share, summary) VALUES (?, ?, ?, ?, ?, ?, ?)`
-    );
-    for (const r of REGIONS) {
-      insertRegion.run(r.id, r.name, r.state, r.sortOrder, r.dataQuality, r.productionShare ?? null, r.summary ?? null);
-    }
-  }
-  const profileCount = (sqlite.prepare("SELECT COUNT(*) as c FROM cost_profiles").get() as { c: number }).c;
-  if (profileCount === 0) {
-    const insertProfile = sqlite.prepare(`
-      INSERT INTO cost_profiles (
-        region_id, segment, segment_label, yield_t_ha, price_t, gross_income_ha,
-        seed_cost_ha, fertiliser_cost_ha, crop_protection_cost_ha, irrigation_cost_ha, water_use_ml_ha,
-        machinery_cost_ha, contract_cost_ha, labour_cost_ha, labour_rate_hr, post_harvest_cost_ha,
-        overhead_pct, total_variable_cost_ha, gross_margin_ha,
-        data_quality, source_name, source_url, source_year, notes
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-    for (const p of COST_PROFILES) {
-      insertProfile.run(
-        p.regionId, p.segment, p.segmentLabel, p.yieldTHa ?? null, p.priceT ?? null, p.grossIncomeHa ?? null,
-        p.seedCostHa ?? null, p.fertiliserCostHa ?? null, p.cropProtectionCostHa ?? null, p.irrigationCostHa ?? null, p.waterUseMlHa ?? null,
-        p.machineryCostHa ?? null, p.contractCostHa ?? null, p.labourCostHa ?? null, p.labourRateHr ?? null, p.postHarvestCostHa ?? null,
-        p.overheadPct ?? null, p.totalVariableCostHa ?? null, p.grossMarginHa ?? null,
-        p.dataQuality, p.sourceName ?? null, p.sourceUrl ?? null, p.sourceYear ?? null, p.notes ?? null
-      );
-    }
-  }
+// Maps DB snake_case rows <-> app camelCase types.
+function rowToRegion(row: any): Region {
+  return {
+    id: row.id,
+    name: row.name,
+    state: row.state,
+    sortOrder: row.sort_order,
+    dataQuality: row.data_quality,
+    productionShare: row.production_share ?? null,
+    summary: row.summary ?? null,
+  };
 }
 
-seedIfEmpty();
+function regionPatchToRow(patch: Partial<InsertRegion>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (patch.id !== undefined) row.id = patch.id;
+  if (patch.name !== undefined) row.name = patch.name;
+  if (patch.state !== undefined) row.state = patch.state;
+  if (patch.sortOrder !== undefined) row.sort_order = patch.sortOrder;
+  if (patch.dataQuality !== undefined) row.data_quality = patch.dataQuality;
+  if (patch.productionShare !== undefined) row.production_share = patch.productionShare;
+  if (patch.summary !== undefined) row.summary = patch.summary;
+  return row;
+}
+
+function rowToCostProfile(row: any): CostProfile {
+  return {
+    id: row.id,
+    regionId: row.region_id,
+    segment: row.segment,
+    segmentLabel: row.segment_label,
+    yieldTHa: row.yield_t_ha ?? null,
+    priceT: row.price_t ?? null,
+    grossIncomeHa: row.gross_income_ha ?? null,
+    seedCostHa: row.seed_cost_ha ?? null,
+    fertiliserCostHa: row.fertiliser_cost_ha ?? null,
+    cropProtectionCostHa: row.crop_protection_cost_ha ?? null,
+    irrigationCostHa: row.irrigation_cost_ha ?? null,
+    waterUseMlHa: row.water_use_ml_ha ?? null,
+    machineryCostHa: row.machinery_cost_ha ?? null,
+    contractCostHa: row.contract_cost_ha ?? null,
+    labourCostHa: row.labour_cost_ha ?? null,
+    labourRateHr: row.labour_rate_hr ?? null,
+    postHarvestCostHa: row.post_harvest_cost_ha ?? null,
+    overheadPct: row.overhead_pct ?? null,
+    totalVariableCostHa: row.total_variable_cost_ha ?? null,
+    grossMarginHa: row.gross_margin_ha ?? null,
+    dataQuality: row.data_quality,
+    sourceName: row.source_name ?? null,
+    sourceUrl: row.source_url ?? null,
+    sourceYear: row.source_year ?? null,
+    notes: row.notes ?? null,
+  };
+}
+
+function costProfilePatchToRow(patch: Partial<InsertCostProfile>): Record<string, any> {
+  const row: Record<string, any> = {};
+  if (patch.regionId !== undefined) row.region_id = patch.regionId;
+  if (patch.segment !== undefined) row.segment = patch.segment;
+  if (patch.segmentLabel !== undefined) row.segment_label = patch.segmentLabel;
+  if (patch.yieldTHa !== undefined) row.yield_t_ha = patch.yieldTHa;
+  if (patch.priceT !== undefined) row.price_t = patch.priceT;
+  if (patch.grossIncomeHa !== undefined) row.gross_income_ha = patch.grossIncomeHa;
+  if (patch.seedCostHa !== undefined) row.seed_cost_ha = patch.seedCostHa;
+  if (patch.fertiliserCostHa !== undefined) row.fertiliser_cost_ha = patch.fertiliserCostHa;
+  if (patch.cropProtectionCostHa !== undefined) row.crop_protection_cost_ha = patch.cropProtectionCostHa;
+  if (patch.irrigationCostHa !== undefined) row.irrigation_cost_ha = patch.irrigationCostHa;
+  if (patch.waterUseMlHa !== undefined) row.water_use_ml_ha = patch.waterUseMlHa;
+  if (patch.machineryCostHa !== undefined) row.machinery_cost_ha = patch.machineryCostHa;
+  if (patch.contractCostHa !== undefined) row.contract_cost_ha = patch.contractCostHa;
+  if (patch.labourCostHa !== undefined) row.labour_cost_ha = patch.labourCostHa;
+  if (patch.labourRateHr !== undefined) row.labour_rate_hr = patch.labourRateHr;
+  if (patch.postHarvestCostHa !== undefined) row.post_harvest_cost_ha = patch.postHarvestCostHa;
+  if (patch.overheadPct !== undefined) row.overhead_pct = patch.overheadPct;
+  if (patch.totalVariableCostHa !== undefined) row.total_variable_cost_ha = patch.totalVariableCostHa;
+  if (patch.grossMarginHa !== undefined) row.gross_margin_ha = patch.grossMarginHa;
+  if (patch.dataQuality !== undefined) row.data_quality = patch.dataQuality;
+  if (patch.sourceName !== undefined) row.source_name = patch.sourceName;
+  if (patch.sourceUrl !== undefined) row.source_url = patch.sourceUrl;
+  if (patch.sourceYear !== undefined) row.source_year = patch.sourceYear;
+  if (patch.notes !== undefined) row.notes = patch.notes;
+  return row;
+}
 
 export interface IStorage {
   getRegions(): Promise<Region[]>;
@@ -97,34 +97,65 @@ export interface IStorage {
 
 export class DatabaseStorage implements IStorage {
   async getRegions(): Promise<Region[]> {
-    return db.select().from(regions).all().sort((a, b) => a.sortOrder - b.sortOrder);
+    const { data, error } = await supabase
+      .from("regions")
+      .select("*")
+      .order("sort_order", { ascending: true });
+    if (error) throw error;
+    return (data ?? []).map(rowToRegion);
   }
 
   async getRegion(id: string): Promise<Region | undefined> {
-    return db.select().from(regions).where(eq(regions.id, id)).get();
+    const { data, error } = await supabase.from("regions").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return data ? rowToRegion(data) : undefined;
   }
 
   async getCostProfiles(regionId?: string): Promise<CostProfile[]> {
+    let query = supabase.from("cost_profiles").select("*");
     if (regionId) {
-      return db.select().from(costProfiles).where(eq(costProfiles.regionId, regionId)).all();
+      query = query.eq("region_id", regionId);
     }
-    return db.select().from(costProfiles).all();
+    const { data, error } = await query;
+    if (error) throw error;
+    return (data ?? []).map(rowToCostProfile);
   }
 
   async getCostProfile(id: number): Promise<CostProfile | undefined> {
-    return db.select().from(costProfiles).where(eq(costProfiles.id, id)).get();
+    const { data, error } = await supabase.from("cost_profiles").select("*").eq("id", id).maybeSingle();
+    if (error) throw error;
+    return data ? rowToCostProfile(data) : undefined;
   }
 
   async updateCostProfile(id: number, patch: Partial<InsertCostProfile>): Promise<CostProfile | undefined> {
-    return db.update(costProfiles).set(patch).where(eq(costProfiles.id, id)).returning().get();
+    const row = costProfilePatchToRow(patch);
+    const { data, error } = await supabase
+      .from("cost_profiles")
+      .update(row)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToCostProfile(data) : undefined;
   }
 
   async createCostProfile(profile: InsertCostProfile): Promise<CostProfile> {
-    return db.insert(costProfiles).values(profile).returning().get();
+    const row = costProfilePatchToRow(profile);
+    const { data, error } = await supabase.from("cost_profiles").insert(row).select().single();
+    if (error) throw error;
+    return rowToCostProfile(data);
   }
 
   async updateRegion(id: string, patch: Partial<InsertRegion>): Promise<Region | undefined> {
-    return db.update(regions).set(patch).where(eq(regions.id, id)).returning().get();
+    const row = regionPatchToRow(patch);
+    const { data, error } = await supabase
+      .from("regions")
+      .update(row)
+      .eq("id", id)
+      .select()
+      .maybeSingle();
+    if (error) throw error;
+    return data ? rowToRegion(data) : undefined;
   }
 }
 
