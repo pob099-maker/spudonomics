@@ -9,14 +9,28 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// In-memory admin token for gating writes to the Admin/Data page. Not
+// persisted (no localStorage in this sandbox) — re-entered each session.
+// This is a lightweight deterrent for a small trusted colleague group, not a
+// full auth system.
+let adminToken: string | null = null;
+export function setAdminToken(token: string | null) {
+  adminToken = token;
+}
+export function getAdminToken() {
+  return adminToken;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
+  if (adminToken) headers["x-admin-token"] = adminToken;
   const res = await fetch(`${API_BASE}${url}`, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
+    headers,
     body: data ? JSON.stringify(data) : undefined,
   });
 

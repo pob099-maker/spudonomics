@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Region, CostProfile, InsertCostProfile } from "@shared/schema";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, setAdminToken, getAdminToken } from "@/lib/queryClient";
 import {
   Table,
   TableBody,
@@ -28,7 +28,7 @@ import { DataQualityBadge } from "@/components/data-quality-badge";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, ExternalLink } from "lucide-react";
+import { Pencil, ExternalLink, Lock, LockOpen } from "lucide-react";
 
 const NUMERIC_FIELDS: { key: keyof CostProfile; label: string }[] = [
   { key: "yieldTHa", label: "Yield (t/ha)" },
@@ -55,6 +55,7 @@ export default function Admin() {
     queryKey: ["/api/cost-profiles"],
   });
   const [editing, setEditing] = useState<CostProfile | null>(null);
+  const [unlocked, setUnlocked] = useState(!!getAdminToken());
 
   const regionById = new Map(regions?.map((r) => [r.id, r]) ?? []);
 
@@ -69,6 +70,8 @@ export default function Admin() {
           becomes available — the citation fields are mandatory so provenance is never lost.
         </p>
       </div>
+
+      <AdminUnlockGate unlocked={unlocked} onUnlocked={() => setUnlocked(true)} />
 
       <Card>
         <CardHeader>
@@ -159,9 +162,11 @@ export default function Admin() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setEditing(p)}
+                          disabled={!unlocked}
+                          title={unlocked ? "Edit" : "Unlock editing above to edit"}
                           data-testid={`button-edit-profile-${p.id}`}
                         >
-                          <Pencil className="h-3.5 w-3.5" />
+                          {unlocked ? <Pencil className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -180,6 +185,74 @@ export default function Admin() {
         />
       )}
     </div>
+  );
+}
+
+function AdminUnlockGate({ unlocked, onUnlocked }: { unlocked: boolean; onUnlocked: () => void }) {
+  const [token, setToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const verify = useMutation({
+    mutationFn: async (candidate: string) => {
+      const res = await fetch(`${("__PORT_5000__" as string).startsWith("__") ? "" : "__PORT_5000__"}/api/admin/verify`, {
+        method: "POST",
+        headers: { "x-admin-token": candidate },
+      });
+      if (!res.ok) throw new Error("Invalid token");
+      return candidate;
+    },
+    onSuccess: (candidate) => {
+      setAdminToken(candidate);
+      setError(null);
+      onUnlocked();
+      toast({ title: "Editing unlocked", description: "You can now edit cost profiles." });
+    },
+    onError: () => setError("That token wasn't recognised."),
+  });
+
+  if (unlocked) {
+    return (
+      <div className="flex items-center gap-2 text-xs text-muted-foreground" data-testid="text-admin-unlocked">
+        <LockOpen className="h-3.5 w-3.5" />
+        Editing unlocked for this session.
+      </div>
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="pt-6">
+        <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+          <div className="flex-1 space-y-1.5">
+            <Label htmlFor="admin-token" className="flex items-center gap-1.5 text-sm">
+              <Lock className="h-3.5 w-3.5" />
+              Editing is locked — enter the shared admin token to make changes
+            </Label>
+            <Input
+              id="admin-token"
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="Admin token"
+              data-testid="input-admin-token"
+            />
+            {error && <p className="text-xs text-destructive">{error}</p>}
+          </div>
+          <Button
+            onClick={() => verify.mutate(token)}
+            disabled={!token || verify.isPending}
+            data-testid="button-unlock-editing"
+          >
+            {verify.isPending ? "Checking\u2026" : "Unlock editing"}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground/80 mt-2">
+          Anyone can view this page — the token only gates who can overwrite the published baseline figures.
+          Ask whoever manages this deployment for the token.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
