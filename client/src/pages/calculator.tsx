@@ -28,7 +28,17 @@ import {
   SCENARIO_PRESETS,
   type ScenarioState,
 } from "@/lib/scenario-presets";
-import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon, Sprout, ExternalLink } from "lucide-react";
+import {
+  computeLifecycleEmissions,
+  REFERENCE_NUTRIENT_RATES,
+  N_FACTOR_TOTAL,
+  N_EMISSION_COMPONENTS,
+  P2O5_FACTOR,
+  K2O_FACTOR,
+  REFERENCE_DIESEL_USE,
+  DIESEL_EMISSION_FACTOR,
+} from "@/lib/lifecycle-factors";
+import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon, Sprout, ExternalLink, Leaf } from "lucide-react";
 
 type FieldKey =
   | "yieldTHa"
@@ -247,6 +257,27 @@ export default function Calculator() {
     [scenarioForm]
   );
   const hasActiveScenario = Object.values(scenario).some((v) => v !== 0);
+
+  // Lifecycle / GHG overlay — indicative fertiliser + machinery-diesel footprint.
+  // Main results card: no scenario adjustment (scale = 0%), yield taken from
+  // whatever is currently in the editable form.
+  const lifecycleResults = useMemo(
+    () => (form ? computeLifecycleEmissions(0, 0, form.yieldTHa) : null),
+    [form]
+  );
+  // Scenario table: baseline uses the region's published yield; scenario uses
+  // the scenario's fertiliserPct/machineryPct sliders plus its adjusted yield.
+  const baselineLifecycle = useMemo(
+    () => (baselineForm ? computeLifecycleEmissions(0, 0, baselineForm.yieldTHa) : null),
+    [baselineForm]
+  );
+  const scenarioLifecycle = useMemo(
+    () =>
+      scenarioForm
+        ? computeLifecycleEmissions(scenario.fertiliserPct, scenario.machineryPct, scenarioForm.yieldTHa)
+        : null,
+    [scenarioForm, scenario.fertiliserPct, scenario.machineryPct]
+  );
 
   const applyPreset = (presetId: string) => {
     const preset = SCENARIO_PRESETS.find((p) => p.id === presetId);
@@ -469,6 +500,51 @@ export default function Calculator() {
               </CardContent>
             </Card>
 
+            {lifecycleResults && (
+              <Card>
+                <CardHeader>
+                  <div className="flex items-start gap-2">
+                    <Leaf className="h-4 w-4 text-[hsl(var(--chart-1))] shrink-0 mt-0.5" />
+                    <div>
+                      <CardTitle className="text-base font-display">Lifecycle emissions (indicative)</CardTitle>
+                      <CardDescription className="text-xs">
+                        Fertiliser + machinery diesel only — a partial footprint, not a full farm-gate LCA.
+                      </CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <ResultRow
+                    label="Fertiliser (manufacture + field N2O)"
+                    value={formatNumber(lifecycleResults.fertiliserKgHa, { maxFractionDigits: 0 })}
+                    unit="kg CO2e/ha"
+                    testId="result-lifecycle-fertiliser"
+                  />
+                  <ResultRow
+                    label="Machinery & fuel (diesel)"
+                    value={formatNumber(lifecycleResults.machineryKgHa, { maxFractionDigits: 0 })}
+                    unit="kg CO2e/ha"
+                    testId="result-lifecycle-machinery"
+                  />
+                  <div className="h-px bg-border" />
+                  <ResultRow
+                    label="Total (partial footprint)"
+                    value={formatNumber(lifecycleResults.totalKgHa, { maxFractionDigits: 0 })}
+                    unit="kg CO2e/ha"
+                    emphasize
+                    testId="result-lifecycle-total"
+                  />
+                  <ResultRow
+                    label="Per tonne produced"
+                    value={formatNumber(lifecycleResults.totalKgPerTonne, { maxFractionDigits: 1 })}
+                    unit="kg CO2e/t"
+                    testId="result-lifecycle-per-tonne"
+                  />
+                  <LifecycleSources />
+                </CardContent>
+              </Card>
+            )}
+
             {selectedProfile && <SourcePanel profile={selectedProfile} />}
           </div>
         </div>
@@ -614,6 +690,55 @@ export default function Calculator() {
                 </tbody>
               </table>
             </div>
+
+            {baselineLifecycle && scenarioLifecycle && (
+              <>
+                <div className="flex items-center gap-2 pt-2">
+                  <Leaf className="h-3.5 w-3.5 text-[hsl(var(--chart-1))]" />
+                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    Lifecycle emissions (indicative) — fertiliser + machinery diesel only
+                  </h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-xs text-muted-foreground">
+                        <th className="text-left font-medium pb-2">Result</th>
+                        <th className="text-right font-medium pb-2">Baseline</th>
+                        <th className="text-right font-medium pb-2">Scenario</th>
+                        <th className="text-right font-medium pb-2">Δ</th>
+                      </tr>
+                    </thead>
+                    <tbody className="font-mono">
+                      <LifecycleScenarioRow
+                        label="Fertiliser emissions (kg CO2e/ha)"
+                        baseline={baselineLifecycle.fertiliserKgHa}
+                        scenario={scenarioLifecycle.fertiliserKgHa}
+                        testId="lifecycle-fertiliser"
+                      />
+                      <LifecycleScenarioRow
+                        label="Machinery emissions (kg CO2e/ha)"
+                        baseline={baselineLifecycle.machineryKgHa}
+                        scenario={scenarioLifecycle.machineryKgHa}
+                        testId="lifecycle-machinery"
+                      />
+                      <LifecycleScenarioRow
+                        label="Total partial footprint (kg CO2e/ha)"
+                        baseline={baselineLifecycle.totalKgHa}
+                        scenario={scenarioLifecycle.totalKgHa}
+                        testId="lifecycle-total"
+                        emphasize
+                      />
+                    </tbody>
+                  </table>
+                </div>
+                <p className="text-xs text-muted-foreground/80">
+                  Assumes fertiliser/machinery input volume shifts by the same % as the cost sliders above. Excludes
+                  crop protection, irrigation pumping electricity, and post-harvest transport — see the source card
+                  for full methodology and citations.
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -666,6 +791,123 @@ function ScenarioRow({
         {formatCurrency(delta)}
       </td>
     </tr>
+  );
+}
+
+function LifecycleScenarioRow({
+  label,
+  baseline,
+  scenario,
+  emphasize,
+  testId,
+}: {
+  label: string;
+  baseline: number;
+  scenario: number;
+  emphasize?: boolean;
+  testId?: string;
+}) {
+  const delta = scenario - baseline;
+  const deltaColor =
+    Math.abs(delta) < 0.5
+      ? "text-muted-foreground"
+      : delta < 0
+      ? "text-[hsl(var(--chart-1))]"
+      : "text-[hsl(var(--chart-4))]";
+  return (
+    <tr className="border-t border-border/60">
+      <td className={`py-2 pr-2 ${emphasize ? "font-sans font-medium text-foreground" : "font-sans text-muted-foreground"}`}>
+        {label}
+      </td>
+      <td className="py-2 text-right text-muted-foreground" data-testid={`text-baseline-${testId}`}>
+        {formatNumber(baseline, { maxFractionDigits: 0 })}
+      </td>
+      <td
+        className={`py-2 text-right ${emphasize ? "font-semibold text-foreground" : ""}`}
+        data-testid={`text-scenario-${testId}`}
+      >
+        {formatNumber(scenario, { maxFractionDigits: 0 })}
+      </td>
+      <td className={`py-2 pl-2 text-right font-medium ${deltaColor}`} data-testid={`text-delta-${testId}`}>
+        {delta >= 0 ? "+" : ""}
+        {formatNumber(delta, { maxFractionDigits: 0 })}
+      </td>
+    </tr>
+  );
+}
+
+// Reference constants + citations shown in the Lifecycle emissions card and
+// reused by the Admin page's read-only GHG factors reference.
+export function LifecycleSources() {
+  return (
+    <div className="space-y-2 pt-1">
+      <div className="h-px bg-border" />
+      <p className="text-xs text-muted-foreground/80">
+        Modelled from a flat Australian reference nutrient program (N {REFERENCE_NUTRIENT_RATES.N.value} /
+        P2O5 {REFERENCE_NUTRIENT_RATES.P2O5.value} / K2O {REFERENCE_NUTRIENT_RATES.K2O.value} kg/ha) and
+        {" "}
+        {REFERENCE_DIESEL_USE.value} L/ha machinery diesel — not region-specific. Excludes crop protection,
+        irrigation pumping electricity, and post-harvest transport.
+      </p>
+      <div className="flex flex-wrap gap-x-3 gap-y-1">
+        <a
+          href={REFERENCE_NUTRIENT_RATES.N.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          Haifa Group nutrient rates <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={N_EMISSION_COMPONENTS[0].sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          N manufacture/hydrolysis (Agriland.ie) <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={N_EMISSION_COMPONENTS[2].sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          Field N2O (IPCC 2006 Ch.11) <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={P2O5_FACTOR.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          P2O5 factor (FAO/AGRIS) <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={K2O_FACTOR.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          K2O factor (4C Services) <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={REFERENCE_DIESEL_USE.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          Diesel use (SEFARI Scotland) <ExternalLink className="h-3 w-3" />
+        </a>
+        <a
+          href={DIESEL_EMISSION_FACTOR.sourceUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 text-xs underline underline-offset-2 text-muted-foreground hover:text-foreground"
+        >
+          Diesel factor (NGA Factors 2025) <ExternalLink className="h-3 w-3" />
+        </a>
+      </div>
+    </div>
   );
 }
 

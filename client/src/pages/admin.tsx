@@ -28,7 +28,16 @@ import { DataQualityBadge } from "@/components/data-quality-badge";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { Pencil, ExternalLink, Lock, LockOpen } from "lucide-react";
+import { Pencil, ExternalLink, Lock, LockOpen, Leaf } from "lucide-react";
+import {
+  REFERENCE_NUTRIENT_RATES,
+  N_EMISSION_COMPONENTS,
+  N_FACTOR_TOTAL,
+  P2O5_FACTOR,
+  K2O_FACTOR,
+  REFERENCE_DIESEL_USE,
+  DIESEL_EMISSION_FACTOR,
+} from "@/lib/lifecycle-factors";
 
 const NUMERIC_FIELDS: { key: keyof CostProfile; label: string }[] = [
   { key: "yieldTHa", label: "Yield (t/ha)" },
@@ -178,6 +187,8 @@ export default function Admin() {
         </CardContent>
       </Card>
 
+      <LifecycleFactorsCard />
+
       {editing && (
         <EditProfileDialog
           profile={editing}
@@ -185,6 +196,119 @@ export default function Admin() {
         />
       )}
     </div>
+  );
+}
+
+function LifecycleFactorsCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start gap-2">
+          <Leaf className="h-4 w-4 text-green-600 shrink-0 mt-0.5" />
+          <div>
+            <CardTitle className="text-base font-display">Lifecycle / GHG factors (reference)</CardTitle>
+            <CardDescription>
+              Read-only. Backs the indicative lifecycle-emissions figures shown in the Calculator. Flat national
+              reference constants, not region-specific -- not editable here.
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div>
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Reference nutrient program (Australia)
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nutrient</TableHead>
+                <TableHead>Reference rate</TableHead>
+                <TableHead>Source</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {Object.entries(REFERENCE_NUTRIENT_RATES).map(([key, f]) => (
+                <TableRow key={key} data-testid={`row-ghg-nutrient-${key}`}>
+                  <TableCell className="font-medium">{key}</TableCell>
+                  <TableCell className="font-mono text-sm">{f.value} {f.unit}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline decoration-dotted hover:decoration-solid">
+                      {f.sourceLabel}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Nitrogen emission factor components (sum = {N_FACTOR_TOTAL.toFixed(2)} kg CO2e/kg N)
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Component</TableHead>
+                <TableHead>Factor</TableHead>
+                <TableHead>Source</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {N_EMISSION_COMPONENTS.map((f) => (
+                <TableRow key={f.label} data-testid={`row-ghg-n-${f.label}`}>
+                  <TableCell className="max-w-[260px] text-sm">{f.label}</TableCell>
+                  <TableCell className="font-mono text-sm whitespace-nowrap">{f.value} {f.unit}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline decoration-dotted hover:decoration-solid">
+                      {f.sourceLabel}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <div>
+          <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground mb-2">
+            Manufacture factors and machinery diesel
+          </h3>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Factor</TableHead>
+                <TableHead>Value</TableHead>
+                <TableHead>Source</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {[P2O5_FACTOR, K2O_FACTOR, REFERENCE_DIESEL_USE, DIESEL_EMISSION_FACTOR].map((f) => (
+                <TableRow key={f.label} data-testid={`row-ghg-factor-${f.label}`}>
+                  <TableCell className="max-w-[260px] text-sm">{f.label}</TableCell>
+                  <TableCell className="font-mono text-sm whitespace-nowrap">{f.value} {f.unit}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    <a href={f.sourceUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline decoration-dotted hover:decoration-solid">
+                      {f.sourceLabel}
+                      <ExternalLink className="h-3 w-3 shrink-0" />
+                    </a>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+
+        <p className="text-xs text-muted-foreground/80">
+          Scope: fertiliser manufacture + field N2O + machinery diesel only. Excludes crop protection
+          manufacture, irrigation pumping electricity, packing, cold storage and transport -- this is a partial,
+          indicative footprint, not a full farm-gate life-cycle assessment.
+        </p>
+      </CardContent>
+    </Card>
   );
 }
 
