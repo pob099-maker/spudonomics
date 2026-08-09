@@ -15,11 +15,20 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
+import { Badge } from "@/components/ui/badge";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { DataQualityBadge } from "@/components/data-quality-badge";
 import { SourcePanel } from "@/components/source-panel";
 import { formatCurrency, formatNumber } from "@/lib/format";
 import { apiRequest } from "@/lib/queryClient";
-import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon } from "lucide-react";
+import {
+  ZERO_SCENARIO,
+  SCENARIO_SLIDERS,
+  SCENARIO_PRESETS,
+  type ScenarioState,
+} from "@/lib/scenario-presets";
+import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon, Sprout, ExternalLink } from "lucide-react";
 
 type FieldKey =
   | "yieldTHa"
@@ -120,6 +129,56 @@ function toFormState(profile: CostProfile): FormState {
   };
 }
 
+interface MarginResults {
+  grossRevenueHa: number;
+  totalVariableCostHa: number;
+  netGrossMarginHa: number;
+  marginPerTonne: number | null;
+  breakevenYield: number | null;
+  breakevenPrice: number | null;
+}
+
+function computeMargin(v: FormState): MarginResults {
+  const grossRevenueHa = v.grossRevenueHa;
+  const inputCostHa =
+    v.seedCostHa +
+    v.fertiliserCostHa +
+    v.cropProtectionCostHa +
+    v.irrigationCostHa +
+    v.machineryCostHa +
+    v.contractCostHa +
+    v.labourCostHa +
+    v.postHarvestCostHa;
+  const overheadHa = grossRevenueHa * (v.overheadPct / 100);
+  const totalVariableCostHa = inputCostHa + overheadHa;
+  const netGrossMarginHa = grossRevenueHa - totalVariableCostHa;
+  const marginPerTonne = v.yieldTHa > 0 ? netGrossMarginHa / v.yieldTHa : null;
+  const breakevenYield = v.priceT > 0 ? totalVariableCostHa / v.priceT : null;
+  const breakevenPrice = v.yieldTHa > 0 ? totalVariableCostHa / v.yieldTHa : null;
+  return { grossRevenueHa, totalVariableCostHa, netGrossMarginHa, marginPerTonne, breakevenYield, breakevenPrice };
+}
+
+// Applies a scenario's percentage deltas to the region's baseline (never to
+// whatever the user has manually typed into the calculator inputs), so the
+// scenario comparison always reads against the published standard.
+function applyScenario(baseline: FormState, scenario: ScenarioState): FormState {
+  const yieldTHa = baseline.yieldTHa * (1 + scenario.yieldPct / 100);
+  const priceT = baseline.priceT * (1 + scenario.pricePct / 100);
+  const grossRevenueHa =
+    baseline.grossRevenueHa * (1 + scenario.yieldPct / 100) * (1 + scenario.pricePct / 100);
+  return {
+    ...baseline,
+    yieldTHa,
+    priceT,
+    grossRevenueHa,
+    fertiliserCostHa: baseline.fertiliserCostHa * (1 + scenario.fertiliserPct / 100),
+    cropProtectionCostHa: baseline.cropProtectionCostHa * (1 + scenario.cropProtectionPct / 100),
+    irrigationCostHa: baseline.irrigationCostHa * (1 + scenario.irrigationPct / 100),
+    machineryCostHa: baseline.machineryCostHa * (1 + scenario.machineryPct / 100),
+    labourCostHa: baseline.labourCostHa * (1 + scenario.labourPct / 100),
+  };
+}
+
 export default function Calculator() {
   const { data: regions, isLoading: regionsLoading } = useQuery<Region[]>({
     queryKey: ["/api/regions"],
@@ -158,35 +217,42 @@ export default function Calculator() {
   );
 
   const [form, setForm] = useState<FormState | null>(null);
+  const [scenario, setScenario] = useState<ScenarioState>(ZERO_SCENARIO);
 
   useEffect(() => {
     if (selectedProfile) {
       setForm(toFormState(selectedProfile));
+      setScenario(ZERO_SCENARIO);
     }
   }, [selectedProfile]);
 
   const region = regions?.find((r) => r.id === regionId);
 
-  const results = useMemo(() => {
-    if (!form) return null;
-    const grossRevenueHa = form.grossRevenueHa;
-    const inputCostHa =
-      form.seedCostHa +
-      form.fertiliserCostHa +
-      form.cropProtectionCostHa +
-      form.irrigationCostHa +
-      form.machineryCostHa +
-      form.contractCostHa +
-      form.labourCostHa +
-      form.postHarvestCostHa;
-    const overheadHa = grossRevenueHa * (form.overheadPct / 100);
-    const totalVariableCostHa = inputCostHa + overheadHa;
-    const netGrossMarginHa = grossRevenueHa - totalVariableCostHa;
-    const marginPerTonne = form.yieldTHa > 0 ? netGrossMarginHa / form.yieldTHa : null;
-    const breakevenYield = form.priceT > 0 ? totalVariableCostHa / form.priceT : null;
-    const breakevenPrice = form.yieldTHa > 0 ? totalVariableCostHa / form.yieldTHa : null;
-    return { grossRevenueHa, totalVariableCostHa, netGrossMarginHa, marginPerTonne, breakevenYield, breakevenPrice };
-  }, [form]);
+  const results = useMemo(() => (form ? computeMargin(form) : null), [form]);
+
+  const baselineForm = useMemo(
+    () => (selectedProfile ? toFormState(selectedProfile) : null),
+    [selectedProfile]
+  );
+  const scenarioForm = useMemo(
+    () => (baselineForm ? applyScenario(baselineForm, scenario) : null),
+    [baselineForm, scenario]
+  );
+  const baselineResults = useMemo(
+    () => (baselineForm ? computeMargin(baselineForm) : null),
+    [baselineForm]
+  );
+  const scenarioResults = useMemo(
+    () => (scenarioForm ? computeMargin(scenarioForm) : null),
+    [scenarioForm]
+  );
+  const hasActiveScenario = Object.values(scenario).some((v) => v !== 0);
+
+  const applyPreset = (presetId: string) => {
+    const preset = SCENARIO_PRESETS.find((p) => p.id === presetId);
+    if (!preset) return;
+    setScenario((prev) => ({ ...prev, ...preset.deltas }));
+  };
 
   const isNoData = region?.dataQuality === "none";
   const noCostBreakdown = !!selectedProfile && hasNoCostBreakdown(selectedProfile);
@@ -407,7 +473,199 @@ export default function Calculator() {
           </div>
         </div>
       )}
+
+      {!profilesLoading && form && baselineResults && scenarioResults && (
+        <Card>
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div className="flex items-start gap-2.5">
+              <Sprout className="h-5 w-5 text-[hsl(var(--sidebar-primary))] shrink-0 mt-0.5" />
+              <div>
+                <CardTitle className="text-base font-display">Practice change scenario</CardTitle>
+                <CardDescription>
+                  Model how adopting a practice change would move this region's published baseline gross
+                  margin. Always compares against the standardised baseline — independent of any manual edits
+                  above.
+                </CardDescription>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setScenario(ZERO_SCENARIO)}
+              disabled={!hasActiveScenario}
+              className="shrink-0"
+              data-testid="button-reset-scenario"
+            >
+              <RotateCcw className="h-3.5 w-3.5" />
+              Reset scenario
+            </Button>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="space-y-2">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Presets — modeled assumptions, not regional data
+              </h3>
+              <p className="text-xs text-muted-foreground/80">
+                Each preset sets only the sliders it affects. Clicking a second preset overwrites shared
+                sliders rather than stacking on top — combine effects manually if you want to layer
+                practice changes.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {SCENARIO_PRESETS.map((preset) => (
+                  <Tooltip key={preset.id}>
+                    <TooltipTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => applyPreset(preset.id)}
+                        data-testid={`button-preset-${preset.id}`}
+                      >
+                        {preset.label}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent className="max-w-xs space-y-1.5 text-xs">
+                      <p>{preset.description}</p>
+                      <a
+                        href={preset.sourceUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 underline underline-offset-2"
+                      >
+                        {preset.sourceLabel}
+                        <ExternalLink className="h-3 w-3" />
+                      </a>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {SCENARIO_SLIDERS.map((slider) => {
+                const value = scenario[slider.key];
+                return (
+                  <div key={slider.key} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-xs">
+                      <Label htmlFor={`slider-${slider.key}`} className="text-muted-foreground">
+                        {slider.label}
+                      </Label>
+                      <span
+                        className={`font-mono font-medium ${
+                          value > 0
+                            ? "text-[hsl(var(--chart-1))]"
+                            : value < 0
+                            ? "text-[hsl(var(--chart-4))]"
+                            : "text-muted-foreground"
+                        }`}
+                        data-testid={`text-scenario-${slider.key}`}
+                      >
+                        {value > 0 ? "+" : ""}
+                        {value}%
+                      </span>
+                    </div>
+                    <Slider
+                      id={`slider-${slider.key}`}
+                      min={-50}
+                      max={50}
+                      step={1}
+                      value={[value]}
+                      onValueChange={([v]) => setScenario((prev) => ({ ...prev, [slider.key]: v }))}
+                      data-testid={`slider-${slider.key}`}
+                    />
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="h-px bg-border" />
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="text-xs text-muted-foreground">
+                    <th className="text-left font-medium pb-2">Result</th>
+                    <th className="text-right font-medium pb-2">Baseline</th>
+                    <th className="text-right font-medium pb-2">Scenario</th>
+                    <th className="text-right font-medium pb-2">Δ</th>
+                  </tr>
+                </thead>
+                <tbody className="font-mono">
+                  <ScenarioRow
+                    label="Gross revenue"
+                    baseline={baselineResults.grossRevenueHa}
+                    scenario={scenarioResults.grossRevenueHa}
+                    testId="gross-revenue"
+                  />
+                  <ScenarioRow
+                    label="Total variable cost"
+                    baseline={baselineResults.totalVariableCostHa}
+                    scenario={scenarioResults.totalVariableCostHa}
+                    testId="total-cost"
+                    invertColor
+                  />
+                  <ScenarioRow
+                    label="Net gross margin"
+                    baseline={baselineResults.netGrossMarginHa}
+                    scenario={scenarioResults.netGrossMarginHa}
+                    testId="net-margin"
+                    emphasize
+                  />
+                </tbody>
+              </table>
+            </div>
+          </CardContent>
+        </Card>
+      )}
     </div>
+  );
+}
+
+function ScenarioRow({
+  label,
+  baseline,
+  scenario,
+  emphasize,
+  invertColor,
+  testId,
+}: {
+  label: string;
+  baseline: number;
+  scenario: number;
+  emphasize?: boolean;
+  invertColor?: boolean;
+  testId?: string;
+}) {
+  const delta = scenario - baseline;
+  const isImprovement = invertColor ? delta < 0 : delta > 0;
+  const isWorse = invertColor ? delta > 0 : delta < 0;
+  const deltaColor =
+    Math.abs(delta) < 0.5
+      ? "text-muted-foreground"
+      : isImprovement
+      ? "text-[hsl(var(--chart-1))]"
+      : isWorse
+      ? "text-[hsl(var(--chart-4))]"
+      : "text-muted-foreground";
+  return (
+    <tr className="border-t border-border/60">
+      <td className={`py-2 pr-2 ${emphasize ? "font-sans font-medium text-foreground" : "font-sans text-muted-foreground"}`}>
+        {label}
+      </td>
+      <td className="py-2 text-right text-muted-foreground" data-testid={`text-baseline-${testId}`}>
+        {formatCurrency(baseline)}
+      </td>
+      <td
+        className={`py-2 text-right ${emphasize ? "font-semibold text-foreground" : ""}`}
+        data-testid={`text-scenario-${testId}`}
+      >
+        {formatCurrency(scenario)}
+      </td>
+      <td className={`py-2 pl-2 text-right font-medium ${deltaColor}`} data-testid={`text-delta-${testId}`}>
+        {delta >= 0 ? "+" : ""}
+        {formatCurrency(delta)}
+      </td>
+    </tr>
   );
 }
 
