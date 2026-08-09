@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { DataQualityBadge } from "@/components/data-quality-badge";
 import { SourcePanel } from "@/components/source-panel";
 import { formatCurrency, formatNumber } from "@/lib/format";
+import { apiRequest } from "@/lib/queryClient";
 import { RotateCcw, TriangleAlert, Droplets, Calculator as CalculatorIcon } from "lucide-react";
 
 type FieldKey =
@@ -135,8 +136,7 @@ export default function Calculator() {
   const { data: profiles, isLoading: profilesLoading } = useQuery<CostProfile[]>({
     queryKey: ["/api/cost-profiles", regionId],
     queryFn: async () => {
-      const res = await fetch(`/api/cost-profiles?regionId=${regionId}`);
-      if (!res.ok) throw new Error("Failed to load cost profiles");
+      const res = await apiRequest("GET", `/api/cost-profiles?regionId=${regionId}`);
       return res.json();
     },
     enabled: !!regionId,
