@@ -1,0 +1,348 @@
+import { useState } from "react";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import type { Region, CostProfile, InsertCostProfile } from "@shared/schema";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { DataQualityBadge } from "@/components/data-quality-badge";
+import { formatCurrency, formatNumber } from "@/lib/format";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/hooks/use-toast";
+import { Pencil, ExternalLink } from "lucide-react";
+
+const NUMERIC_FIELDS: { key: keyof CostProfile; label: string }[] = [
+  { key: "yieldTHa", label: "Yield (t/ha)" },
+  { key: "priceT", label: "Price ($/t)" },
+  { key: "grossIncomeHa", label: "Gross income ($/ha)" },
+  { key: "seedCostHa", label: "Seed ($/ha)" },
+  { key: "fertiliserCostHa", label: "Fertiliser ($/ha)" },
+  { key: "cropProtectionCostHa", label: "Crop protection ($/ha)" },
+  { key: "irrigationCostHa", label: "Irrigation ($/ha)" },
+  { key: "waterUseMlHa", label: "Water use (ML/ha)" },
+  { key: "machineryCostHa", label: "Machinery ($/ha)" },
+  { key: "contractCostHa", label: "Contract ops ($/ha)" },
+  { key: "labourCostHa", label: "Labour ($/ha)" },
+  { key: "labourRateHr", label: "Labour rate ($/hr)" },
+  { key: "postHarvestCostHa", label: "Post-harvest ($/ha)" },
+  { key: "overheadPct", label: "Overhead (%)" },
+  { key: "totalVariableCostHa", label: "Total variable cost ($/ha)" },
+  { key: "grossMarginHa", label: "Gross margin ($/ha)" },
+];
+
+export default function Admin() {
+  const { data: regions, isLoading: regionsLoading } = useQuery<Region[]>({ queryKey: ["/api/regions"] });
+  const { data: profiles, isLoading: profilesLoading } = useQuery<CostProfile[]>({
+    queryKey: ["/api/cost-profiles"],
+  });
+  const [editing, setEditing] = useState<CostProfile | null>(null);
+
+  const regionById = new Map(regions?.map((r) => [r.id, r]) ?? []);
+
+  return (
+    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+      <div className="space-y-1">
+        <h1 className="font-display text-xl font-semibold" data-testid="text-admin-title">
+          Data sources
+        </h1>
+        <p className="text-sm text-muted-foreground max-w-2xl">
+          Every baseline in the calculator comes from a cited source below. Edit a row when a better source
+          becomes available — the citation fields are mandatory so provenance is never lost.
+        </p>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-display">Regions</CardTitle>
+          <CardDescription>14 Australian potato-growing regions tracked by Spudonomics.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {regionsLoading ? (
+            <Skeleton className="h-64 w-full" />
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Region</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>Data quality</TableHead>
+                  <TableHead>Production share</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {regions?.map((r) => (
+                  <TableRow key={r.id} data-testid={`row-region-${r.id}`}>
+                    <TableCell className="font-medium">{r.name}</TableCell>
+                    <TableCell className="text-muted-foreground">{r.state}</TableCell>
+                    <TableCell>
+                      <DataQualityBadge quality={r.dataQuality} />
+                    </TableCell>
+                    <TableCell className="text-muted-foreground text-sm">{r.productionShare ?? "—"}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-display">Cost profiles</CardTitle>
+          <CardDescription>One row per region &times; market segment.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {profilesLoading ? (
+            <Skeleton className="h-96 w-full" />
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Region</TableHead>
+                    <TableHead>Segment</TableHead>
+                    <TableHead>Yield</TableHead>
+                    <TableHead>Price</TableHead>
+                    <TableHead>Gross margin</TableHead>
+                    <TableHead>Quality</TableHead>
+                    <TableHead>Source</TableHead>
+                    <TableHead />
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {profiles?.map((p) => (
+                    <TableRow key={p.id} data-testid={`row-profile-${p.id}`}>
+                      <TableCell className="whitespace-nowrap">{regionById.get(p.regionId)?.name ?? p.regionId}</TableCell>
+                      <TableCell className="whitespace-nowrap">{p.segmentLabel}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatNumber(p.yieldTHa, { maxFractionDigits: 1 })}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatCurrency(p.priceT)}</TableCell>
+                      <TableCell className="font-mono text-sm">{formatCurrency(p.grossMarginHa)}</TableCell>
+                      <TableCell>
+                        <DataQualityBadge quality={p.dataQuality} />
+                      </TableCell>
+                      <TableCell className="max-w-[220px] truncate text-xs text-muted-foreground" title={p.sourceName ?? undefined}>
+                        {p.sourceUrl ? (
+                          <a
+                            href={p.sourceUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 underline decoration-dotted hover:decoration-solid"
+                          >
+                            {p.sourceName ?? "Source"}
+                            <ExternalLink className="h-3 w-3 shrink-0" />
+                          </a>
+                        ) : (
+                          p.sourceName ?? "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => setEditing(p)}
+                          data-testid={`button-edit-profile-${p.id}`}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {editing && (
+        <EditProfileDialog
+          profile={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
+    </div>
+  );
+}
+
+function EditProfileDialog({ profile, onClose }: { profile: CostProfile; onClose: () => void }) {
+  const { toast } = useToast();
+  const [form, setForm] = useState<CostProfile>(profile);
+
+  const mutation = useMutation({
+    mutationFn: async (patch: Partial<InsertCostProfile>) => {
+      const res = await apiRequest("PATCH", `/api/cost-profiles/${profile.id}`, patch);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cost-profiles"] });
+      toast({ title: "Profile updated", description: `${profile.segmentLabel} saved with new source data.` });
+      onClose();
+    },
+    onError: (err: Error) => {
+      toast({ title: "Update failed", description: err.message, variant: "destructive" });
+    },
+  });
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Edit — {form.segmentLabel}</DialogTitle>
+          <DialogDescription>
+            Update the baseline values and keep the source citation current. Every numeric field must trace
+            to the source below.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {NUMERIC_FIELDS.map((f) => (
+              <div key={f.key} className="space-y-1">
+                <Label htmlFor={`admin-${f.key}`} className="text-xs text-muted-foreground">
+                  {f.label}
+                </Label>
+                <Input
+                  id={`admin-${f.key}`}
+                  type="number"
+                  className="font-mono text-sm"
+                  value={(form[f.key] as number | null) ?? ""}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      [f.key]: e.target.value === "" ? null : Number(e.target.value),
+                    }))
+                  }
+                  data-testid={`admin-input-${f.key}`}
+                />
+              </div>
+            ))}
+          </div>
+
+          <div className="space-y-1">
+            <Label htmlFor="admin-data-quality" className="text-xs text-muted-foreground">
+              Data quality
+            </Label>
+            <Select
+              value={form.dataQuality}
+              onValueChange={(v) => setForm((prev) => ({ ...prev, dataQuality: v }))}
+            >
+              <SelectTrigger id="admin-data-quality" data-testid="admin-select-quality">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="regional">Regional data</SelectItem>
+                <SelectItem value="state_proxy">State proxy</SelectItem>
+                <SelectItem value="national_proxy">National proxy</SelectItem>
+                <SelectItem value="none">No data — survey needed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="admin-source-name" className="text-xs text-muted-foreground">
+                Source name
+              </Label>
+              <Input
+                id="admin-source-name"
+                value={form.sourceName ?? ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, sourceName: e.target.value }))}
+                data-testid="admin-input-source-name"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="admin-source-year" className="text-xs text-muted-foreground">
+                Source year
+              </Label>
+              <Input
+                id="admin-source-year"
+                value={form.sourceYear ?? ""}
+                onChange={(e) => setForm((prev) => ({ ...prev, sourceYear: e.target.value }))}
+                data-testid="admin-input-source-year"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="admin-source-url" className="text-xs text-muted-foreground">
+              Source URL
+            </Label>
+            <Input
+              id="admin-source-url"
+              value={form.sourceUrl ?? ""}
+              onChange={(e) => setForm((prev) => ({ ...prev, sourceUrl: e.target.value }))}
+              data-testid="admin-input-source-url"
+            />
+          </div>
+          <div className="space-y-1">
+            <Label htmlFor="admin-notes" className="text-xs text-muted-foreground">
+              Notes
+            </Label>
+            <Textarea
+              id="admin-notes"
+              rows={3}
+              value={form.notes ?? ""}
+              onChange={(e) => setForm((prev) => ({ ...prev, notes: e.target.value }))}
+              data-testid="admin-input-notes"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} data-testid="button-cancel-edit">
+            Cancel
+          </Button>
+          <Button
+            onClick={() =>
+              mutation.mutate({
+                yieldTHa: form.yieldTHa,
+                priceT: form.priceT,
+                grossIncomeHa: form.grossIncomeHa,
+                seedCostHa: form.seedCostHa,
+                fertiliserCostHa: form.fertiliserCostHa,
+                cropProtectionCostHa: form.cropProtectionCostHa,
+                irrigationCostHa: form.irrigationCostHa,
+                waterUseMlHa: form.waterUseMlHa,
+                machineryCostHa: form.machineryCostHa,
+                contractCostHa: form.contractCostHa,
+                labourCostHa: form.labourCostHa,
+                labourRateHr: form.labourRateHr,
+                postHarvestCostHa: form.postHarvestCostHa,
+                overheadPct: form.overheadPct,
+                totalVariableCostHa: form.totalVariableCostHa,
+                grossMarginHa: form.grossMarginHa,
+                dataQuality: form.dataQuality,
+                sourceName: form.sourceName,
+                sourceUrl: form.sourceUrl,
+                sourceYear: form.sourceYear,
+                notes: form.notes,
+              })
+            }
+            disabled={mutation.isPending}
+            data-testid="button-save-edit"
+          >
+            {mutation.isPending ? "Saving…" : "Save changes"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
