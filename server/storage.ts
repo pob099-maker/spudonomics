@@ -37,7 +37,23 @@ function rowToCostProfile(row: any): CostProfile {
     grossIncomeHa: row.gross_income_ha ?? null,
     seedCostHa: row.seed_cost_ha ?? null,
     fertiliserCostHa: row.fertiliser_cost_ha ?? null,
+    fertNCostHa: row.fert_n_cost_ha ?? null,
+    fertNQtyKgHa: row.fert_n_qty_kg_ha ?? null,
+    fertPCostHa: row.fert_p_cost_ha ?? null,
+    fertPQtyKgHa: row.fert_p_qty_kg_ha ?? null,
+    fertKCostHa: row.fert_k_cost_ha ?? null,
+    fertKQtyKgHa: row.fert_k_qty_kg_ha ?? null,
+    fertOtherCostHa: row.fert_other_cost_ha ?? null,
+    fertOtherQtyKgHa: row.fert_other_qty_kg_ha ?? null,
     cropProtectionCostHa: row.crop_protection_cost_ha ?? null,
+    chemHerbicideCostHa: row.chem_herbicide_cost_ha ?? null,
+    chemHerbicideQtyLHa: row.chem_herbicide_qty_l_ha ?? null,
+    chemFungicideCostHa: row.chem_fungicide_cost_ha ?? null,
+    chemFungicideQtyLHa: row.chem_fungicide_qty_l_ha ?? null,
+    chemInsecticideCostHa: row.chem_insecticide_cost_ha ?? null,
+    chemInsecticideQtyLHa: row.chem_insecticide_qty_l_ha ?? null,
+    chemOtherCostHa: row.chem_other_cost_ha ?? null,
+    chemOtherQtyLHa: row.chem_other_qty_l_ha ?? null,
     irrigationCostHa: row.irrigation_cost_ha ?? null,
     waterUseMlHa: row.water_use_ml_ha ?? null,
     machineryCostHa: row.machinery_cost_ha ?? null,
@@ -66,7 +82,23 @@ function costProfilePatchToRow(patch: Partial<InsertCostProfile>): Record<string
   if (patch.grossIncomeHa !== undefined) row.gross_income_ha = patch.grossIncomeHa;
   if (patch.seedCostHa !== undefined) row.seed_cost_ha = patch.seedCostHa;
   if (patch.fertiliserCostHa !== undefined) row.fertiliser_cost_ha = patch.fertiliserCostHa;
+  if (patch.fertNCostHa !== undefined) row.fert_n_cost_ha = patch.fertNCostHa;
+  if (patch.fertNQtyKgHa !== undefined) row.fert_n_qty_kg_ha = patch.fertNQtyKgHa;
+  if (patch.fertPCostHa !== undefined) row.fert_p_cost_ha = patch.fertPCostHa;
+  if (patch.fertPQtyKgHa !== undefined) row.fert_p_qty_kg_ha = patch.fertPQtyKgHa;
+  if (patch.fertKCostHa !== undefined) row.fert_k_cost_ha = patch.fertKCostHa;
+  if (patch.fertKQtyKgHa !== undefined) row.fert_k_qty_kg_ha = patch.fertKQtyKgHa;
+  if (patch.fertOtherCostHa !== undefined) row.fert_other_cost_ha = patch.fertOtherCostHa;
+  if (patch.fertOtherQtyKgHa !== undefined) row.fert_other_qty_kg_ha = patch.fertOtherQtyKgHa;
   if (patch.cropProtectionCostHa !== undefined) row.crop_protection_cost_ha = patch.cropProtectionCostHa;
+  if (patch.chemHerbicideCostHa !== undefined) row.chem_herbicide_cost_ha = patch.chemHerbicideCostHa;
+  if (patch.chemHerbicideQtyLHa !== undefined) row.chem_herbicide_qty_l_ha = patch.chemHerbicideQtyLHa;
+  if (patch.chemFungicideCostHa !== undefined) row.chem_fungicide_cost_ha = patch.chemFungicideCostHa;
+  if (patch.chemFungicideQtyLHa !== undefined) row.chem_fungicide_qty_l_ha = patch.chemFungicideQtyLHa;
+  if (patch.chemInsecticideCostHa !== undefined) row.chem_insecticide_cost_ha = patch.chemInsecticideCostHa;
+  if (patch.chemInsecticideQtyLHa !== undefined) row.chem_insecticide_qty_l_ha = patch.chemInsecticideQtyLHa;
+  if (patch.chemOtherCostHa !== undefined) row.chem_other_cost_ha = patch.chemOtherCostHa;
+  if (patch.chemOtherQtyLHa !== undefined) row.chem_other_qty_l_ha = patch.chemOtherQtyLHa;
   if (patch.irrigationCostHa !== undefined) row.irrigation_cost_ha = patch.irrigationCostHa;
   if (patch.waterUseMlHa !== undefined) row.water_use_ml_ha = patch.waterUseMlHa;
   if (patch.machineryCostHa !== undefined) row.machinery_cost_ha = patch.machineryCostHa;

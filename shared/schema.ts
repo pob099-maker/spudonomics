@@ -44,8 +44,34 @@ export const costProfiles = sqliteTable("cost_profiles", {
 
   // Agronomic inputs ($/ha)
   seedCostHa: real("seed_cost_ha"),
+  // Fertiliser total. Authoritative when a source only reports one lump
+  // figure; otherwise treated as the sum of the N/P/K/Other breakdown below.
   fertiliserCostHa: real("fertiliser_cost_ha"),
+  // Fertiliser breakdown by nutrient ($/ha cost + kg/ha applied quantity).
+  // Quantity feeds the lifecycle-emissions calc when known, replacing the
+  // flat national reference rate with this region's own applied rate.
+  fertNCostHa: real("fert_n_cost_ha"),
+  fertNQtyKgHa: real("fert_n_qty_kg_ha"),
+  fertPCostHa: real("fert_p_cost_ha"),
+  fertPQtyKgHa: real("fert_p_qty_kg_ha"),
+  fertKCostHa: real("fert_k_cost_ha"),
+  fertKQtyKgHa: real("fert_k_qty_kg_ha"),
+  fertOtherCostHa: real("fert_other_cost_ha"), // sulfur, lime, trace elements
+  fertOtherQtyKgHa: real("fert_other_qty_kg_ha"),
+
+  // Crop protection total. Authoritative when a source only reports one
+  // lump figure; otherwise treated as the sum of the breakdown below.
   cropProtectionCostHa: real("crop_protection_cost_ha"),
+  // Chemical breakdown by category ($/ha cost + L/ha applied quantity).
+  chemHerbicideCostHa: real("chem_herbicide_cost_ha"),
+  chemHerbicideQtyLHa: real("chem_herbicide_qty_l_ha"),
+  chemFungicideCostHa: real("chem_fungicide_cost_ha"),
+  chemFungicideQtyLHa: real("chem_fungicide_qty_l_ha"),
+  chemInsecticideCostHa: real("chem_insecticide_cost_ha"),
+  chemInsecticideQtyLHa: real("chem_insecticide_qty_l_ha"),
+  chemOtherCostHa: real("chem_other_cost_ha"), // nematicide, desiccant, adjuvants
+  chemOtherQtyLHa: real("chem_other_qty_l_ha"),
+
   irrigationCostHa: real("irrigation_cost_ha"),
   waterUseMlHa: real("water_use_ml_ha"),
 

@@ -140,27 +140,55 @@ export const REFERENCE_FERTILISER_KG_HA =
 
 export const REFERENCE_MACHINERY_KG_HA = REFERENCE_DIESEL_USE.value * DIESEL_EMISSION_FACTOR.value;
 
-// Scales the flat national reference footprint by the practice-change
-// scenario's fertiliserPct / machineryPct sliders (assumes cost change tracks
-// input-volume/fuel-use change 1:1 — a simplification, disclosed in the UI),
-// then converts to per-tonne using the region's own baseline yield.
-export function computeLifecycleEmissions(
-  fertiliserPct: number,
-  machineryPct: number,
-  yieldTHa: number | null | undefined
-): LifecycleEmissions {
-  const fertiliserKgHa = REFERENCE_FERTILISER_KG_HA * (1 + fertiliserPct / 100);
+// Scales each nutrient's reference application rate by its own practice-change
+// scenario slider (nitrogenPct / phosphorusPct / potassiumPct), so a shift in
+// fertiliser *type/mix* -- not just overall fertiliser spend -- shows up here.
+// Uses the region's own applied kg/ha rate when known (nKgHa/pKgHa/kKgHa from
+// that region's cost-profile breakdown); falls back to the flat national
+// reference rate otherwise. machineryPct still scales diesel use 1:1 with its
+// cost slider (a simplification, disclosed in the UI). Converts to per-tonne
+// using the region's own baseline yield.
+export function computeLifecycleEmissions(params: {
+  nitrogenPct?: number;
+  phosphorusPct?: number;
+  potassiumPct?: number;
+  machineryPct?: number;
+  yieldTHa?: number | null;
+  nKgHa?: number | null;
+  pKgHa?: number | null;
+  kKgHa?: number | null;
+}): LifecycleEmissions {
+  const {
+    nitrogenPct = 0,
+    phosphorusPct = 0,
+    potassiumPct = 0,
+    machineryPct = 0,
+    yieldTHa,
+    nKgHa,
+    pKgHa,
+    kKgHa,
+  } = params;
+
+  const nBaseKgHa = nKgHa ?? REFERENCE_NUTRIENT_RATES.N.value;
+  const pBaseKgHa = pKgHa ?? REFERENCE_NUTRIENT_RATES.P2O5.value;
+  const kBaseKgHa = kKgHa ?? REFERENCE_NUTRIENT_RATES.K2O.value;
+
+  const nComponentKgHa = nBaseKgHa * (1 + nitrogenPct / 100) * N_FACTOR_TOTAL;
+  const pComponentKgHa = pBaseKgHa * (1 + phosphorusPct / 100) * P2O5_FACTOR.value;
+  const kComponentKgHa = kBaseKgHa * (1 + potassiumPct / 100) * K2O_FACTOR.value;
+
+  const fertiliserKgHa = nComponentKgHa + pComponentKgHa + kComponentKgHa;
   const machineryKgHa = REFERENCE_MACHINERY_KG_HA * (1 + machineryPct / 100);
   const totalKgHa = fertiliserKgHa + machineryKgHa;
   const totalKgPerTonne = yieldTHa && yieldTHa > 0 ? totalKgHa / yieldTHa : null;
-  const scale = 1 + fertiliserPct / 100;
+
   return {
     fertiliserKgHa,
     machineryKgHa,
     totalKgHa,
     totalKgPerTonne,
-    nComponentKgHa: REFERENCE_NUTRIENT_RATES.N.value * N_FACTOR_TOTAL * scale,
-    pComponentKgHa: REFERENCE_NUTRIENT_RATES.P2O5.value * P2O5_FACTOR.value * scale,
-    kComponentKgHa: REFERENCE_NUTRIENT_RATES.K2O.value * K2O_FACTOR.value * scale,
+    nComponentKgHa,
+    pComponentKgHa,
+    kComponentKgHa,
   };
 }

@@ -25,6 +25,8 @@ import { apiRequest } from "@/lib/queryClient";
 import {
   ZERO_SCENARIO,
   SCENARIO_SLIDERS,
+  FERTILISER_BREAKDOWN_SLIDERS,
+  CHEMICAL_BREAKDOWN_SLIDERS,
   SCENARIO_PRESETS,
   type ScenarioState,
 } from "@/lib/scenario-presets";
@@ -46,7 +48,15 @@ type FieldKey =
   | "grossRevenueHa"
   | "seedCostHa"
   | "fertiliserCostHa"
+  | "fertNCostHa"
+  | "fertPCostHa"
+  | "fertKCostHa"
+  | "fertOtherCostHa"
   | "cropProtectionCostHa"
+  | "chemHerbicideCostHa"
+  | "chemFungicideCostHa"
+  | "chemInsecticideCostHa"
+  | "chemOtherCostHa"
   | "irrigationCostHa"
   | "machineryCostHa"
   | "contractCostHa"
@@ -56,7 +66,7 @@ type FieldKey =
 
 type FormState = Record<FieldKey, number>;
 
-const FIELD_GROUPS: { title: string; fields: { key: FieldKey; label: string; unit: string }[] }[] = [
+const FIELD_GROUPS: { title: string; description?: string; fields: { key: FieldKey; label: string; unit: string }[] }[] = [
   {
     title: "Market & pricing",
     fields: [
@@ -66,12 +76,34 @@ const FIELD_GROUPS: { title: string; fields: { key: FieldKey; label: string; uni
     ],
   },
   {
-    title: "Agronomic inputs",
+    title: "Seed & irrigation",
     fields: [
       { key: "seedCostHa", label: "Seed", unit: "$/ha" },
-      { key: "fertiliserCostHa", label: "Fertiliser", unit: "$/ha" },
-      { key: "cropProtectionCostHa", label: "Crop protection", unit: "$/ha" },
       { key: "irrigationCostHa", label: "Irrigation energy", unit: "$/ha" },
+    ],
+  },
+  {
+    title: "Fertiliser breakdown",
+    description:
+      "\u201cUnspecified\u201d holds the total when a region has no N/P/K breakdown yet. Enter the breakdown in Admin to model fertiliser-type practice changes below.",
+    fields: [
+      { key: "fertiliserCostHa", label: "Unspecified / not broken down", unit: "$/ha" },
+      { key: "fertNCostHa", label: "Nitrogen (N)", unit: "$/ha" },
+      { key: "fertPCostHa", label: "Phosphorus (P)", unit: "$/ha" },
+      { key: "fertKCostHa", label: "Potassium (K)", unit: "$/ha" },
+      { key: "fertOtherCostHa", label: "Other (S, lime, trace)", unit: "$/ha" },
+    ],
+  },
+  {
+    title: "Crop protection breakdown",
+    description:
+      "\u201cUnspecified\u201d holds the total when a region has no chemical-category breakdown yet. Enter the breakdown in Admin to model chemical-type practice changes below.",
+    fields: [
+      { key: "cropProtectionCostHa", label: "Unspecified / not broken down", unit: "$/ha" },
+      { key: "chemHerbicideCostHa", label: "Herbicide", unit: "$/ha" },
+      { key: "chemFungicideCostHa", label: "Fungicide", unit: "$/ha" },
+      { key: "chemInsecticideCostHa", label: "Insecticide", unit: "$/ha" },
+      { key: "chemOtherCostHa", label: "Other (nematicide, desiccant)", unit: "$/ha" },
     ],
   },
   {
@@ -122,14 +154,39 @@ function hasNoCostBreakdown(profile: CostProfile): boolean {
   return itemized.every((v) => v == null) && profile.totalVariableCostHa == null;
 }
 
+// A region either has a full N/P/K/Other fertiliser breakdown, or none yet --
+// if any sub-field is set, the breakdown fields carry the cost and the
+// "unspecified" legacy total field is zeroed (see Admin's "Sum into total"
+// helper for keeping the two in sync while editing). Same pattern for the
+// chemical-category breakdown.
 function toFormState(profile: CostProfile): FormState {
+  const hasFertBreakdown = [
+    profile.fertNCostHa,
+    profile.fertPCostHa,
+    profile.fertKCostHa,
+    profile.fertOtherCostHa,
+  ].some((v) => v != null);
+  const hasChemBreakdown = [
+    profile.chemHerbicideCostHa,
+    profile.chemFungicideCostHa,
+    profile.chemInsecticideCostHa,
+    profile.chemOtherCostHa,
+  ].some((v) => v != null);
   return {
     yieldTHa: profile.yieldTHa ?? 0,
     priceT: profile.priceT ?? 0,
     grossRevenueHa: deriveGrossRevenue(profile),
     seedCostHa: profile.seedCostHa ?? 0,
-    fertiliserCostHa: profile.fertiliserCostHa ?? 0,
-    cropProtectionCostHa: profile.cropProtectionCostHa ?? 0,
+    fertiliserCostHa: hasFertBreakdown ? 0 : profile.fertiliserCostHa ?? 0,
+    fertNCostHa: profile.fertNCostHa ?? 0,
+    fertPCostHa: profile.fertPCostHa ?? 0,
+    fertKCostHa: profile.fertKCostHa ?? 0,
+    fertOtherCostHa: profile.fertOtherCostHa ?? 0,
+    cropProtectionCostHa: hasChemBreakdown ? 0 : profile.cropProtectionCostHa ?? 0,
+    chemHerbicideCostHa: profile.chemHerbicideCostHa ?? 0,
+    chemFungicideCostHa: profile.chemFungicideCostHa ?? 0,
+    chemInsecticideCostHa: profile.chemInsecticideCostHa ?? 0,
+    chemOtherCostHa: profile.chemOtherCostHa ?? 0,
     irrigationCostHa: profile.irrigationCostHa ?? 0,
     machineryCostHa: profile.machineryCostHa ?? 0,
     contractCostHa: profile.contractCostHa ?? 0,
@@ -153,7 +210,15 @@ function computeMargin(v: FormState): MarginResults {
   const inputCostHa =
     v.seedCostHa +
     v.fertiliserCostHa +
+    v.fertNCostHa +
+    v.fertPCostHa +
+    v.fertKCostHa +
+    v.fertOtherCostHa +
     v.cropProtectionCostHa +
+    v.chemHerbicideCostHa +
+    v.chemFungicideCostHa +
+    v.chemInsecticideCostHa +
+    v.chemOtherCostHa +
     v.irrigationCostHa +
     v.machineryCostHa +
     v.contractCostHa +
@@ -182,7 +247,15 @@ function applyScenario(baseline: FormState, scenario: ScenarioState): FormState 
     priceT,
     grossRevenueHa,
     fertiliserCostHa: baseline.fertiliserCostHa * (1 + scenario.fertiliserPct / 100),
+    fertNCostHa: baseline.fertNCostHa * (1 + scenario.nitrogenPct / 100),
+    fertPCostHa: baseline.fertPCostHa * (1 + scenario.phosphorusPct / 100),
+    fertKCostHa: baseline.fertKCostHa * (1 + scenario.potassiumPct / 100),
+    fertOtherCostHa: baseline.fertOtherCostHa * (1 + scenario.otherFertPct / 100),
     cropProtectionCostHa: baseline.cropProtectionCostHa * (1 + scenario.cropProtectionPct / 100),
+    chemHerbicideCostHa: baseline.chemHerbicideCostHa * (1 + scenario.herbicidePct / 100),
+    chemFungicideCostHa: baseline.chemFungicideCostHa * (1 + scenario.fungicidePct / 100),
+    chemInsecticideCostHa: baseline.chemInsecticideCostHa * (1 + scenario.insecticidePct / 100),
+    chemOtherCostHa: baseline.chemOtherCostHa * (1 + scenario.otherChemPct / 100),
     irrigationCostHa: baseline.irrigationCostHa * (1 + scenario.irrigationPct / 100),
     machineryCostHa: baseline.machineryCostHa * (1 + scenario.machineryPct / 100),
     labourCostHa: baseline.labourCostHa * (1 + scenario.labourPct / 100),
@@ -259,24 +332,60 @@ export default function Calculator() {
   const hasActiveScenario = Object.values(scenario).some((v) => v !== 0);
 
   // Lifecycle / GHG overlay — indicative fertiliser + machinery-diesel footprint.
-  // Main results card: no scenario adjustment (scale = 0%), yield taken from
-  // whatever is currently in the editable form.
+  // Uses the region's own N/P/K application rates (kg/ha) when the profile has
+  // them, falling back to the flat national reference rate otherwise.
+  // Main results card: no scenario adjustment, yield taken from whatever is
+  // currently in the editable form.
   const lifecycleResults = useMemo(
-    () => (form ? computeLifecycleEmissions(0, 0, form.yieldTHa) : null),
-    [form]
+    () =>
+      form
+        ? computeLifecycleEmissions({
+            yieldTHa: form.yieldTHa,
+            nKgHa: selectedProfile?.fertNQtyKgHa,
+            pKgHa: selectedProfile?.fertPQtyKgHa,
+            kKgHa: selectedProfile?.fertKQtyKgHa,
+          })
+        : null,
+    [form, selectedProfile]
   );
   // Scenario table: baseline uses the region's published yield; scenario uses
-  // the scenario's fertiliserPct/machineryPct sliders plus its adjusted yield.
+  // the scenario's nitrogen/phosphorus/potassium/machinery sliders plus its
+  // adjusted yield — so a shift in fertiliser *type*, not just overall spend,
+  // moves the footprint.
   const baselineLifecycle = useMemo(
-    () => (baselineForm ? computeLifecycleEmissions(0, 0, baselineForm.yieldTHa) : null),
-    [baselineForm]
+    () =>
+      baselineForm
+        ? computeLifecycleEmissions({
+            yieldTHa: baselineForm.yieldTHa,
+            nKgHa: selectedProfile?.fertNQtyKgHa,
+            pKgHa: selectedProfile?.fertPQtyKgHa,
+            kKgHa: selectedProfile?.fertKQtyKgHa,
+          })
+        : null,
+    [baselineForm, selectedProfile]
   );
   const scenarioLifecycle = useMemo(
     () =>
       scenarioForm
-        ? computeLifecycleEmissions(scenario.fertiliserPct, scenario.machineryPct, scenarioForm.yieldTHa)
+        ? computeLifecycleEmissions({
+            nitrogenPct: scenario.nitrogenPct,
+            phosphorusPct: scenario.phosphorusPct,
+            potassiumPct: scenario.potassiumPct,
+            machineryPct: scenario.machineryPct,
+            yieldTHa: scenarioForm.yieldTHa,
+            nKgHa: selectedProfile?.fertNQtyKgHa,
+            pKgHa: selectedProfile?.fertPQtyKgHa,
+            kKgHa: selectedProfile?.fertKQtyKgHa,
+          })
         : null,
-    [scenarioForm, scenario.fertiliserPct, scenario.machineryPct]
+    [
+      scenarioForm,
+      scenario.nitrogenPct,
+      scenario.phosphorusPct,
+      scenario.potassiumPct,
+      scenario.machineryPct,
+      selectedProfile,
+    ]
   );
 
   const applyPreset = (presetId: string) => {
@@ -447,9 +556,14 @@ export default function Calculator() {
             <CardContent className="space-y-6">
               {FIELD_GROUPS.map((group) => (
                 <div key={group.title} className="space-y-3">
-                  <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                    {group.title}
-                  </h3>
+                  <div>
+                    <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {group.title}
+                    </h3>
+                    {group.description && (
+                      <p className="text-xs text-muted-foreground/70 mt-0.5">{group.description}</p>
+                    )}
+                  </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     {group.fields.map((field) => (
                       <div key={field.key} className="space-y-1">
@@ -632,41 +746,30 @@ export default function Calculator() {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {SCENARIO_SLIDERS.map((slider) => {
-                const value = scenario[slider.key];
-                return (
-                  <div key={slider.key} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-xs">
-                      <Label htmlFor={`slider-${slider.key}`} className="text-muted-foreground">
-                        {slider.label}
-                      </Label>
-                      <span
-                        className={`font-mono font-medium ${
-                          value > 0
-                            ? "text-[hsl(var(--chart-1))]"
-                            : value < 0
-                            ? "text-[hsl(var(--chart-4))]"
-                            : "text-muted-foreground"
-                        }`}
-                        data-testid={`text-scenario-${slider.key}`}
-                      >
-                        {value > 0 ? "+" : ""}
-                        {value}%
-                      </span>
-                    </div>
-                    <Slider
-                      id={`slider-${slider.key}`}
-                      min={-50}
-                      max={50}
-                      step={1}
-                      value={[value]}
-                      onValueChange={([v]) => setScenario((prev) => ({ ...prev, [slider.key]: v }))}
-                      data-testid={`slider-${slider.key}`}
-                    />
-                  </div>
-                );
-              })}
+            <ScenarioSliderGrid sliders={SCENARIO_SLIDERS} scenario={scenario} setScenario={setScenario} />
+
+            <div className="h-px bg-border" />
+
+            <div className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Fertiliser mix — by nutrient
+              </h3>
+              <p className="text-xs text-muted-foreground/70">
+                Only moves a region's cost and lifecycle-emissions figures once that region has a real N/P/K
+                breakdown entered in Admin — otherwise the cost sits in “Fertiliser cost — unspecified” above.
+              </p>
+              <ScenarioSliderGrid sliders={FERTILISER_BREAKDOWN_SLIDERS} scenario={scenario} setScenario={setScenario} />
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Crop protection mix — by category
+              </h3>
+              <p className="text-xs text-muted-foreground/70">
+                Only moves a region's cost once that region has a real chemical-category breakdown entered in
+                Admin — otherwise the cost sits in “Crop protection cost — unspecified” above.
+              </p>
+              <ScenarioSliderGrid sliders={CHEMICAL_BREAKDOWN_SLIDERS} scenario={scenario} setScenario={setScenario} />
             </div>
 
             <div className="h-px bg-border" />
@@ -748,15 +851,66 @@ export default function Calculator() {
                   </table>
                 </div>
                 <p className="text-xs text-muted-foreground/80">
-                  Assumes fertiliser/machinery input volume shifts by the same % as the cost sliders above. Excludes
-                  crop protection, irrigation pumping electricity, and post-harvest transport — see the source card
-                  for full methodology and citations.
+                  Fertiliser emissions move with the Nitrogen / Phosphorus / Potassium mix sliders above (each
+                  nutrient's applied kg/ha shifts by its own %); machinery emissions move with the Machinery & fuel
+                  cost slider. The “Fertiliser cost — unspecified” slider changes cost but not emissions, since its
+                  nutrient content isn't known. Excludes crop protection, irrigation pumping electricity, and
+                  post-harvest transport — see the source card for full methodology and citations.
                 </p>
               </>
             )}
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function ScenarioSliderGrid({
+  sliders,
+  scenario,
+  setScenario,
+}: {
+  sliders: { key: keyof ScenarioState; label: string }[];
+  scenario: ScenarioState;
+  setScenario: (updater: (prev: ScenarioState) => ScenarioState) => void;
+}) {
+  return (
+    <div className="grid gap-4 sm:grid-cols-2">
+      {sliders.map((slider) => {
+        const value = scenario[slider.key];
+        return (
+          <div key={slider.key} className="space-y-1.5">
+            <div className="flex items-center justify-between text-xs">
+              <Label htmlFor={`slider-${slider.key}`} className="text-muted-foreground">
+                {slider.label}
+              </Label>
+              <span
+                className={`font-mono font-medium ${
+                  value > 0
+                    ? "text-[hsl(var(--chart-1))]"
+                    : value < 0
+                    ? "text-[hsl(var(--chart-4))]"
+                    : "text-muted-foreground"
+                }`}
+                data-testid={`text-scenario-${slider.key}`}
+              >
+                {value > 0 ? "+" : ""}
+                {value}%
+              </span>
+            </div>
+            <Slider
+              id={`slider-${slider.key}`}
+              min={-50}
+              max={50}
+              step={1}
+              value={[value]}
+              onValueChange={([v]) => setScenario((prev) => ({ ...prev, [slider.key]: v }))}
+              data-testid={`slider-${slider.key}`}
+            />
+          </div>
+        );
+      })}
     </div>
   );
 }

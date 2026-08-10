@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import type { Region, CostProfile, InsertCostProfile } from "@shared/schema";
 import { DATA_QUALITY_LABELS } from "@shared/schema";
@@ -45,8 +46,8 @@ const NUMERIC_FIELDS: { key: keyof CostProfile; label: string }[] = [
   { key: "priceT", label: "Price ($/t)" },
   { key: "grossIncomeHa", label: "Gross income ($/ha)" },
   { key: "seedCostHa", label: "Seed ($/ha)" },
-  { key: "fertiliserCostHa", label: "Fertiliser ($/ha)" },
-  { key: "cropProtectionCostHa", label: "Crop protection ($/ha)" },
+  { key: "fertiliserCostHa", label: "Fertiliser total ($/ha)" },
+  { key: "cropProtectionCostHa", label: "Crop protection total ($/ha)" },
   { key: "irrigationCostHa", label: "Irrigation ($/ha)" },
   { key: "waterUseMlHa", label: "Water use (ML/ha)" },
   { key: "machineryCostHa", label: "Machinery ($/ha)" },
@@ -57,6 +58,27 @@ const NUMERIC_FIELDS: { key: keyof CostProfile; label: string }[] = [
   { key: "overheadPct", label: "Overhead (%)" },
   { key: "totalVariableCostHa", label: "Total variable cost ($/ha)" },
   { key: "grossMarginHa", label: "Gross margin ($/ha)" },
+];
+
+interface BreakdownField {
+  costKey: keyof CostProfile;
+  qtyKey: keyof CostProfile;
+  label: string;
+  qtyUnit: string;
+}
+
+const FERT_BREAKDOWN_FIELDS: BreakdownField[] = [
+  { costKey: "fertNCostHa", qtyKey: "fertNQtyKgHa", label: "Nitrogen (N)", qtyUnit: "kg N/ha" },
+  { costKey: "fertPCostHa", qtyKey: "fertPQtyKgHa", label: "Phosphorus (P)", qtyUnit: "kg P2O5/ha" },
+  { costKey: "fertKCostHa", qtyKey: "fertKQtyKgHa", label: "Potassium (K)", qtyUnit: "kg K2O/ha" },
+  { costKey: "fertOtherCostHa", qtyKey: "fertOtherQtyKgHa", label: "Other (S, lime, trace)", qtyUnit: "kg/ha" },
+];
+
+const CHEM_BREAKDOWN_FIELDS: BreakdownField[] = [
+  { costKey: "chemHerbicideCostHa", qtyKey: "chemHerbicideQtyLHa", label: "Herbicide", qtyUnit: "L/ha" },
+  { costKey: "chemFungicideCostHa", qtyKey: "chemFungicideQtyLHa", label: "Fungicide", qtyUnit: "L/ha" },
+  { costKey: "chemInsecticideCostHa", qtyKey: "chemInsecticideQtyLHa", label: "Insecticide", qtyUnit: "L/ha" },
+  { costKey: "chemOtherCostHa", qtyKey: "chemOtherQtyLHa", label: "Other (nematicide, desiccant, etc.)", qtyUnit: "L/ha" },
 ];
 
 export default function Admin() {
@@ -314,6 +336,86 @@ function LifecycleFactorsCard() {
   );
 }
 
+function BreakdownSection({
+  title,
+  description,
+  fields,
+  form,
+  setForm,
+  totalKey,
+}: {
+  title: string;
+  description: string;
+  fields: BreakdownField[];
+  form: CostProfile;
+  setForm: Dispatch<SetStateAction<CostProfile>>;
+  totalKey: keyof CostProfile;
+}) {
+  const sumIntoTotal = () => {
+    const values = fields.map((f) => form[f.costKey] as number | null);
+    const anyFilled = values.some((v) => v !== null && v !== undefined);
+    if (!anyFilled) return;
+    const sum = values.reduce((s: number, v) => s + (v ?? 0), 0);
+    setForm((prev) => ({ ...prev, [totalKey]: sum }));
+  };
+
+  return (
+    <div className="space-y-2 rounded-md border border-card-border p-3">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <div>
+          <h4 className="text-xs font-medium">{title}</h4>
+          <p className="text-xs text-muted-foreground">{description}</p>
+        </div>
+        <Button type="button" variant="outline" size="sm" onClick={sumIntoTotal} data-testid={`button-sum-${String(totalKey)}`}>
+          Sum into total
+        </Button>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {fields.map((f) => (
+          <div key={String(f.costKey)} className="grid grid-cols-2 gap-2 items-end">
+            <div className="space-y-1">
+              <Label htmlFor={`admin-${f.costKey}`} className="text-xs text-muted-foreground">
+                {f.label} ($/ha)
+              </Label>
+              <Input
+                id={`admin-${f.costKey}`}
+                type="number"
+                className="font-mono text-sm"
+                value={(form[f.costKey] as number | null) ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [f.costKey]: e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+                data-testid={`admin-input-${f.costKey}`}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor={`admin-${f.qtyKey}`} className="text-xs text-muted-foreground">
+                {f.qtyUnit}
+              </Label>
+              <Input
+                id={`admin-${f.qtyKey}`}
+                type="number"
+                className="font-mono text-sm"
+                value={(form[f.qtyKey] as number | null) ?? ""}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    [f.qtyKey]: e.target.value === "" ? null : Number(e.target.value),
+                  }))
+                }
+                data-testid={`admin-input-${f.qtyKey}`}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function AdminUnlockGate({ unlocked, onUnlocked }: { unlocked: boolean; onUnlocked: () => void }) {
   const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -451,6 +553,24 @@ function EditProfileDialog({
             ))}
           </div>
 
+          <BreakdownSection
+            title="Fertiliser breakdown"
+            description="Optional. When any of these are filled, use “Sum into total” to keep the Fertiliser total above in sync."
+            fields={FERT_BREAKDOWN_FIELDS}
+            form={form}
+            setForm={setForm}
+            totalKey="fertiliserCostHa"
+          />
+
+          <BreakdownSection
+            title="Chemical breakdown"
+            description="Optional. When any of these are filled, use “Sum into total” to keep the Crop protection total above in sync."
+            fields={CHEM_BREAKDOWN_FIELDS}
+            form={form}
+            setForm={setForm}
+            totalKey="cropProtectionCostHa"
+          />
+
           <div className="space-y-1">
             <Label htmlFor="admin-data-quality" className="text-xs text-muted-foreground">
               Data quality
@@ -557,7 +677,23 @@ function EditProfileDialog({
                 grossIncomeHa: form.grossIncomeHa,
                 seedCostHa: form.seedCostHa,
                 fertiliserCostHa: form.fertiliserCostHa,
+                fertNCostHa: form.fertNCostHa,
+                fertNQtyKgHa: form.fertNQtyKgHa,
+                fertPCostHa: form.fertPCostHa,
+                fertPQtyKgHa: form.fertPQtyKgHa,
+                fertKCostHa: form.fertKCostHa,
+                fertKQtyKgHa: form.fertKQtyKgHa,
+                fertOtherCostHa: form.fertOtherCostHa,
+                fertOtherQtyKgHa: form.fertOtherQtyKgHa,
                 cropProtectionCostHa: form.cropProtectionCostHa,
+                chemHerbicideCostHa: form.chemHerbicideCostHa,
+                chemHerbicideQtyLHa: form.chemHerbicideQtyLHa,
+                chemFungicideCostHa: form.chemFungicideCostHa,
+                chemFungicideQtyLHa: form.chemFungicideQtyLHa,
+                chemInsecticideCostHa: form.chemInsecticideCostHa,
+                chemInsecticideQtyLHa: form.chemInsecticideQtyLHa,
+                chemOtherCostHa: form.chemOtherCostHa,
+                chemOtherQtyLHa: form.chemOtherQtyLHa,
                 irrigationCostHa: form.irrigationCostHa,
                 waterUseMlHa: form.waterUseMlHa,
                 machineryCostHa: form.machineryCostHa,
