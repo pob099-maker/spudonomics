@@ -1,6 +1,7 @@
-node_modules/
-dist/
-data.db
-data.db-shm
-data.db-wal
+node_modules
+dist
 .env
+.env.local
+*.local
+.DS_Store
+*.tsbuildinfo

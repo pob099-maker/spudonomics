@@ -1,26 +1,14 @@
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
-import path from "node:path";
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  plugins: [react()],
-  resolve: {
-    alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
-      "@assets": path.resolve(import.meta.dirname, "attached_assets"),
-    },
-  },
-  root: path.resolve(import.meta.dirname, "client"),
-  base: "./",
-  build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
-  },
-  server: {
-    fs: {
-      strict: true,
-      deny: ["**/.*"],
-    },
+  // Set VITE_BASE when hosting under a sub-path (e.g. GitHub Pages project site).
+  base: process.env.VITE_BASE ?? "/",
+  plugins: [react(), tailwindcss()],
+  server: { port: 5190 },
+  test: {
+    environment: "node",
+    include: ["src/**/*.test.ts"],
   },
 });

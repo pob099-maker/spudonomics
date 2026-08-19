@@ -1,0 +1,50 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* PotatoLink brand palette — rich earthy browns with golden-tan accents and
+   warm cream backgrounds, per the PotatoLink brand guidelines and the
+   magazine/collateral colour language. */
+@theme {
+  --color-primary: #6e4320; /* rich chocolate brown (headings, actions) */
+  --color-primary-soft: #d9a868; /* golden tan (dark-mode primary, accents) */
+  --color-accent: #d6a455; /* PotatoLink gold (panels, highlights) */
+  --color-paper: #f7f2e9; /* warm cream page background */
+  --color-ink: #3a2f24; /* dark warm brown-grey text */
+  --color-success: #4c7a22;
+  --color-warning: #c08a00;
+  --color-danger: #a13544;
+  --color-surface: #ffffff;
+  --color-surface-dark: #2a2118;
+  --color-paper-dark: #1e1710;
+  --color-ink-dark: #efe6d7;
+
+  --font-sans: "Satoshi", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Cabinet Grotesk", "Satoshi", ui-sans-serif, system-ui, sans-serif;
+}
+
+html {
+  background-color: var(--color-paper);
+}
+
+html.dark {
+  background-color: var(--color-paper-dark);
+  color-scheme: dark;
+}
+
+body {
+  font-family: var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+}
+
+/* Brand typography: bold all-caps headings ("clarity and authority"). */
+h1,
+h2 {
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}

@@ -1,0 +1,128 @@
+[
+  {
+    "id": "tas-north",
+    "name": "Tasmania — Northern / North-West",
+    "state": "Tasmania",
+    "sortOrder": 1,
+    "dataQuality": "regional",
+    "productionShare": ">90% of Tasmanian production",
+    "summary": "The single best public dataset in Australia for potato economics: itemised Nov 2020 budgets across fresh, processing and seed."
+  },
+  {
+    "id": "tas-south",
+    "name": "Tasmania — Southern / Midlands",
+    "state": "Tasmania",
+    "sortOrder": 2,
+    "dataQuality": "regional",
+    "productionShare": "<10% of Tasmanian production",
+    "summary": "Itemised Nov 2020 Low Rainfall budget models the Midlands district."
+  },
+  {
+    "id": "vic-central",
+    "name": "Victoria — Ballarat / Central",
+    "state": "Victoria",
+    "sortOrder": 3,
+    "dataQuality": "none",
+    "productionShare": "Part of Victoria's 7,587 ha / 292 kt / $137m (2013-14)",
+    "summary": "No region-specific potato economics exist in the public domain. Victoria's own water-economics study excluded potatoes from its gross margin table entirely."
+  },
+  {
+    "id": "vic-gippsland",
+    "name": "Victoria — Gippsland / Thorpdale",
+    "state": "Victoria",
+    "sortOrder": 4,
+    "dataQuality": "none",
+    "productionShare": "Victoria's most potato-intensive region by area share",
+    "summary": "No yield, price or cost data of any kind. Thorpdale is a certified seed district; West Gippsland is Victoria's #1 potato catchment."
+  },
+  {
+    "id": "vic-mallee",
+    "name": "Victoria — Mallee",
+    "state": "Victoria",
+    "sortOrder": 5,
+    "dataQuality": "none",
+    "productionShare": "5.97% of Mallee/Wimmera vegetable area",
+    "summary": "No yield, price or cost data of any kind."
+  },
+  {
+    "id": "sa-adelaide",
+    "name": "South Australia — Northern Adelaide Plains (Virginia)",
+    "state": "South Australia",
+    "sortOrder": 6,
+    "dataQuality": "state_proxy",
+    "productionShare": "22.5% of Adelaide Plains gross ag. value",
+    "summary": "Region-specific yield and water use exist; costs are only available as a 2005 state aggregate."
+  },
+  {
+    "id": "sa-riverland",
+    "name": "South Australia — Riverland / Mallee",
+    "state": "South Australia",
+    "sortOrder": 7,
+    "dataQuality": "state_proxy",
+    "productionShare": "15% of national production",
+    "summary": "Region-specific yield and water use exist; costs are only available as a 2005 state aggregate."
+  },
+  {
+    "id": "sa-limestone",
+    "name": "South Australia — Limestone Coast (South East)",
+    "state": "South Australia",
+    "sortOrder": 8,
+    "dataQuality": "state_proxy",
+    "productionShare": "10% of national production",
+    "summary": "Region-specific yield and water use exist; costs are only available as a 2005 state aggregate."
+  },
+  {
+    "id": "nsw-riverina",
+    "name": "NSW — Riverina",
+    "state": "New South Wales",
+    "sortOrder": 9,
+    "dataQuality": "regional",
+    "productionShare": "70% of NSW production",
+    "summary": "Three fully itemised 2013 NSW DPI budgets (2012 prices) — the second-best public dataset in Australia."
+  },
+  {
+    "id": "nsw-tablelands",
+    "name": "NSW — Central / Southern Tablelands",
+    "state": "New South Wales",
+    "sortOrder": 10,
+    "dataQuality": "none",
+    "productionShare": "20% of NSW production",
+    "summary": "No separate budget was ever published. Publisher states Tablelands yields run ~20% above Riverina — an approximation, not an observation."
+  },
+  {
+    "id": "wa-manjimup",
+    "name": "Western Australia — Manjimup / Pemberton",
+    "state": "Western Australia",
+    "sortOrder": 11,
+    "dataQuality": "state_proxy",
+    "productionShare": "36% of Preston-Warren-Blackwood vegetable area",
+    "summary": "District-specific water use is directly measured; yield and gross margin are 2005-2013 state-level estimates."
+  },
+  {
+    "id": "wa-perth",
+    "name": "Western Australia — Perth / Myalup",
+    "state": "Western Australia",
+    "sortOrder": 12,
+    "dataQuality": "state_proxy",
+    "productionShare": "33% of Peel-Harvey vegetable area",
+    "summary": "District-specific water use is directly measured; a 2013 modelled gross margin exists for Medina/Dandaragan."
+  },
+  {
+    "id": "qld-atherton",
+    "name": "Queensland — Atherton Tablelands",
+    "state": "Queensland",
+    "sortOrder": 13,
+    "dataQuality": "regional",
+    "productionShare": "60-67% of Far North Qld vegetable area/value",
+    "summary": "One of the only region-labelled gross margins outside Tas/NSW — but it dates from 1998."
+  },
+  {
+    "id": "qld-lockyer",
+    "name": "Queensland — Lockyer Valley",
+    "state": "Queensland",
+    "sortOrder": 14,
+    "dataQuality": "regional",
+    "productionShare": "13% of Lockyer-Fassifern vegetable area",
+    "summary": "Region-labelled 1998 gross margin; too old for current decisions."
+  }
+]
