@@ -54,6 +54,8 @@ export const costProfileSchema = z.object({
   contractCostHa: optionalNumber,
   labourCostHa: optionalNumber,
   labourRateHr: optionalNumber,
+  unpaidFamilyLabourHrHa: optionalNumber,
+  unpaidFamilyLabourValueHa: optionalNumber,
   postHarvestCostHa: optionalNumber,
   overheadPct: optionalNumber,
 
