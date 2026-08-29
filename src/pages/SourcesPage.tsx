@@ -6,6 +6,7 @@ import { listRegions, profilesForRegion } from "../data";
 import { money } from "../services/format";
 import { baselineMargin } from "../services/grossMargin";
 import { Card, PageTitle, QualityPill } from "../components/ui";
+import { ContributeCard } from "../components/ContributeCard";
 
 export function SourcesPage() {
   const regions = useMemo(() => listRegions(), []);
@@ -20,6 +21,8 @@ export function SourcesPage() {
           all — because a gap you can see is more useful than a number you cannot trust.
         </p>
       </div>
+
+      <ContributeCard />
 
       {regions.map((region) => (
         <Card key={region.id}>
