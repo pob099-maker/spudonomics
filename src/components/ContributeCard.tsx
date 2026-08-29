@@ -4,26 +4,39 @@
 // back. Regional reps are the people best placed to ask for that face to
 // face, so this card exists to give them one link they can hand a grower on
 // the spot — copyable, no sign-in, and never asking for a name or email.
+//
+// Picking a region and market segment swaps the link for this app's own
+// short redirect (e.g. .../#/survey/vic-central/seed) which lands the
+// grower straight on a survey already showing their region and segment —
+// one less thing for them to type, and one less chance of a mismatch
+// between what a rep meant to send and what actually got submitted.
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Card } from "./ui";
+import {
+  buildShortSurveyLink,
+  buildSurveyFormUrl,
+  SURVEY_REGIONS,
+  SURVEY_SEGMENTS,
+} from "../data/surveyLinks";
 
-/**
- * PotatoLink Regional Cost & Yield Survey — anonymous by design. Google
- * Forms is set to DO_NOT_COLLECT for email addresses, the form itself is
- * open with no sign-in, and every cost question asks for a band rather than
- * an exact figure. Responses feed cost-profiles.json only after review and
- * a 3-response-per-region minimum — see docs/adding-a-region.md.
- */
-export const SURVEY_URL =
-  "https://docs.google.com/forms/d/e/1FAIpQLScvNn5H1mbvqCQHQ1a_kpQ7pu0VqZmbKArRItejOdWZ0phFTg/viewform";
+const selectClass =
+  "min-h-11 w-full rounded-lg border border-ink/20 bg-surface px-3 dark:border-ink-dark/20 dark:bg-surface-dark";
 
 export function ContributeCard() {
+  const [regionId, setRegionId] = useState<string>("");
+  const [segmentId, setSegmentId] = useState<string>("");
   const [copied, setCopied] = useState(false);
+
+  const isSpecific = Boolean(regionId && segmentId);
+  const surveyUrl = useMemo(
+    () => (isSpecific ? buildShortSurveyLink(regionId, segmentId) : buildSurveyFormUrl()),
+    [isSpecific, regionId, segmentId],
+  );
 
   async function copyLink(): Promise<void> {
     try {
-      await navigator.clipboard.writeText(SURVEY_URL);
+      await navigator.clipboard.writeText(surveyUrl);
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
     } catch {
@@ -43,9 +56,59 @@ export function ContributeCard() {
         banded ranges rather than exact figures, never asks for a name or email address, and
         nothing you enter can be traced back to you.
       </p>
+
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <div>
+          <label htmlFor="survey-region" className="mb-1 block text-sm font-medium">
+            Region (optional — pre-fills the link)
+          </label>
+          <select
+            id="survey-region"
+            className={selectClass}
+            value={regionId}
+            onChange={(event) => setRegionId(event.target.value)}
+          >
+            <option value="">Any region</option>
+            {SURVEY_REGIONS.map((region) => (
+              <option key={region.id} value={region.id}>
+                {region.label}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label htmlFor="survey-segment" className="mb-1 block text-sm font-medium">
+            Market segment (optional — pre-fills the link)
+          </label>
+          <select
+            id="survey-segment"
+            className={selectClass}
+            value={segmentId}
+            onChange={(event) => setSegmentId(event.target.value)}
+          >
+            <option value="">Any segment</option>
+            {SURVEY_SEGMENTS.map((segment) => (
+              <option key={segment.id} value={segment.id}>
+                {segment.label}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+      {regionId && !segmentId ? (
+        <p className="mt-2 text-xs text-ink/50 dark:text-ink-dark/50">
+          Pick a market segment too to get a link pre-filled for both.
+        </p>
+      ) : null}
+      {segmentId && !regionId ? (
+        <p className="mt-2 text-xs text-ink/50 dark:text-ink-dark/50">
+          Pick a region too to get a link pre-filled for both.
+        </p>
+      ) : null}
+
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <a
-          href={SURVEY_URL}
+          href={surveyUrl}
           target="_blank"
           rel="noreferrer"
           className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-medium text-white dark:bg-primary-soft dark:text-ink-dark"
@@ -60,7 +123,7 @@ export function ContributeCard() {
           {copied ? "Link copied" : "Copy link to share"}
         </button>
       </div>
-      <p className="mt-2 break-all text-xs text-ink/50 dark:text-ink-dark/50">{SURVEY_URL}</p>
+      <p className="mt-2 break-all text-xs text-ink/50 dark:text-ink-dark/50">{surveyUrl}</p>
     </Card>
   );
 }
