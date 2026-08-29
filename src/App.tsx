@@ -3,7 +3,7 @@ import { Layout } from "./components/Layout";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { CalculatorPage } from "./pages/CalculatorPage";
 import { SourcesPage } from "./pages/SourcesPage";
-import { SurveyRedirectPage } from "./pages/SurveyRedirectPage";
+import { ContributePage } from "./pages/ContributePage";
 
 export function App() {
   return (
@@ -18,7 +18,8 @@ export function App() {
           <Routes>
             <Route path="/" element={<CalculatorPage />} />
             <Route path="/sources" element={<SourcesPage />} />
-            <Route path="/survey/:regionId/:segmentId" element={<SurveyRedirectPage />} />
+            <Route path="/contribute" element={<ContributePage />} />
+            <Route path="/survey/:regionId/:segmentId" element={<ContributePage />} />
           </Routes>
         </Layout>
       </HashRouter>

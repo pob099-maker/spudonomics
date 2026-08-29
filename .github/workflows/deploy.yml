@@ -30,6 +30,12 @@ jobs:
       - run: npm run build
         env:
           VITE_BASE: /spudonomics/
+          # Publishable/anon key, not a secret — Postgres row-level security
+          # (see the spudonomics_survey_responses_to_public_schema migration) is what actually
+          # restricts it to inserting a Contribute-form response and reading
+          # the aggregated response counter, never an individual row.
+          VITE_SUPABASE_URL: https://wqyjpgjztaiigyjijdxt.supabase.co
+          VITE_SUPABASE_ANON_KEY: sb_publishable_68329GCd2IUzuMn9hcjq6w_SqSrKR8I
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

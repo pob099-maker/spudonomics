@@ -35,6 +35,13 @@ export interface SurveyOption {
   formValue: string;
 }
 
+// As of 29 Aug 2026 the app's own "Contribute" page (ContributePage.tsx,
+// backed by public.spudonomics_survey_responses) has replaced this Google Form as
+// where new responses actually go — see ContributeCard.tsx, which now
+// builds a short link straight to that in-app page. buildSurveyFormUrl and
+// the constants below are kept only so the original form (and any
+// responses already collected there before the switch) stay reachable by
+// URL; nothing in this app's UI links to them anymore.
 const SURVEY_FORM_ID = "1FAIpQLScvNn5H1mbvqCQHQ1a_kpQ7pu0VqZmbKArRItejOdWZ0phFTg";
 
 export const SURVEY_BASE_URL = `https://docs.google.com/forms/d/e/${SURVEY_FORM_ID}/viewform`;

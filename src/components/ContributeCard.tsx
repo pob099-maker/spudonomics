@@ -5,23 +5,33 @@
 // face, so this card exists to give them one link they can hand a grower on
 // the spot — copyable, no sign-in, and never asking for a name or email.
 //
+// As of 29 Aug 2026 this points at the app's own Contribute page rather than
+// an external Google Form: the form used to only accept free text for
+// region/segment and could only be edited by hand in the Forms UI, so it
+// listed a handful of districts and nothing enforced a match. The in-app
+// form offers every region and segment as pick-one options and writes
+// straight to public.spudonomics_survey_responses (see supabaseClient.ts) — no
+// name, email, or IP address is ever collected or stored.
+//
 // Picking a region and market segment swaps the link for this app's own
 // short redirect (e.g. .../#/survey/vic-central/seed) which lands the
-// grower straight on a survey already showing their region and segment —
-// one less thing for them to type, and one less chance of a mismatch
-// between what a rep meant to send and what actually got submitted.
+// grower straight on the Contribute form already showing their region and
+// segment selected — one less thing for them to pick, and one less chance of
+// a mismatch between what a rep meant to send and what actually got
+// submitted.
 
 import { useMemo, useState } from "react";
 import { Card } from "./ui";
-import {
-  buildShortSurveyLink,
-  buildSurveyFormUrl,
-  SURVEY_REGIONS,
-  SURVEY_SEGMENTS,
-} from "../data/surveyLinks";
+import { buildShortSurveyLink, SURVEY_REGIONS, SURVEY_SEGMENTS } from "../data/surveyLinks";
 
 const selectClass =
   "min-h-11 w-full rounded-lg border border-ink/20 bg-surface px-3 dark:border-ink-dark/20 dark:bg-surface-dark";
+
+function buildContributeLink(regionId: string, segmentId: string): string {
+  if (regionId && segmentId) return buildShortSurveyLink(regionId, segmentId);
+  const origin = typeof window !== "undefined" ? window.location.href.split("#")[0] : "";
+  return `${origin}#/contribute`;
+}
 
 export function ContributeCard() {
   const [regionId, setRegionId] = useState<string>("");
@@ -30,8 +40,8 @@ export function ContributeCard() {
 
   const isSpecific = Boolean(regionId && segmentId);
   const surveyUrl = useMemo(
-    () => (isSpecific ? buildShortSurveyLink(regionId, segmentId) : buildSurveyFormUrl()),
-    [isSpecific, regionId, segmentId],
+    () => buildContributeLink(regionId, segmentId),
+    [regionId, segmentId],
   );
 
   async function copyLink(): Promise<void> {
@@ -109,9 +119,7 @@ export function ContributeCard() {
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <a
-          href={surveyUrl}
-          target="_blank"
-          rel="noreferrer"
+          href={isSpecific ? surveyUrl : "#/contribute"}
           className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-medium text-white dark:bg-primary-soft dark:text-ink-dark"
         >
           Open the anonymous survey

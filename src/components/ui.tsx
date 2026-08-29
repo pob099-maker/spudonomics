@@ -43,6 +43,67 @@ export function QualityPill({ quality }: { quality: DataQuality }) {
   );
 }
 
+/**
+ * A touch-friendly radio button group, styled as a row of pill buttons
+ * rather than tiny native radio dots. Built for the Contribute survey,
+ * where every question is single-choice and needs to be usable on a phone
+ * in a paddock — the exact problem with the old free-text Google Form this
+ * replaced.
+ */
+export function RadioGroup({
+  legend,
+  help,
+  name,
+  options,
+  value,
+  onChange,
+  error,
+}: {
+  legend: string;
+  help?: string;
+  name: string;
+  options: readonly string[];
+  value: string;
+  onChange: (value: string) => void;
+  error?: string;
+}) {
+  return (
+    <fieldset>
+      <legend className="text-sm font-medium">{legend}</legend>
+      {help ? <p className="mt-0.5 text-xs text-ink/60 dark:text-ink-dark/60">{help}</p> : null}
+      <div className="mt-2 flex flex-wrap gap-2">
+        {options.map((option) => {
+          const id = `${name}-${option}`;
+          const checked = value === option;
+          return (
+            <label
+              key={option}
+              htmlFor={id}
+              className={`min-h-11 cursor-pointer rounded-lg border px-3 py-2 text-sm ${
+                checked
+                  ? "border-primary bg-primary/10 font-medium text-primary dark:border-primary-soft dark:bg-primary/20 dark:text-primary-soft"
+                  : "border-ink/20 dark:border-ink-dark/20"
+              }`}
+            >
+              <input
+                type="radio"
+                id={id}
+                name={name}
+                value={option}
+                checked={checked}
+                onChange={() => onChange(option)}
+                className="sr-only"
+              />
+              {option}
+            </label>
+          );
+        })}
+      </div>
+      {error ? <p className="mt-1 text-xs text-danger">{error}</p> : null}
+    </fieldset>
+  );
+}
+
 export function Figure({
   label,
   value,
