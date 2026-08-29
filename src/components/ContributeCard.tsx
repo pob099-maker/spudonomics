@@ -48,13 +48,14 @@ export function ContributeCard() {
 
   return (
     <Card className="border-primary/30 bg-primary/5 dark:border-primary-soft/30 dark:bg-primary/10">
-      <h2 className="font-display text-lg font-bold">Help fill these gaps</h2>
+      <h2 className="font-display text-lg font-bold">Help improve these figures</h2>
       <p className="mt-1 text-sm text-ink/70 dark:text-ink-dark/70">
-        Every figure on this site is only as good as what has been published — and for most
-        regions and segments, not much has. If you grow, advise on, or handle potatoes
-        commercially, two minutes on the survey below helps close that gap. It asks for
-        banded ranges rather than exact figures, never asks for a name or email address, and
-        nothing you enter can be traced back to you.
+        Every figure on this site is only as good as what has been published — and for some
+        regions that means one budget from one season, not a trend. If you grow, advise on, or
+        handle potatoes commercially, two minutes on the survey below helps either close a gap
+        or firm up a figure that's only ever had one source. It asks for banded ranges rather
+        than exact figures, never asks for a name or email address, and nothing you enter can be
+        traced back to you.
       </p>
 
       <div className="mt-3 grid gap-3 sm:grid-cols-2">

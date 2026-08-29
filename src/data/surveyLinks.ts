@@ -2,7 +2,7 @@
 // prefill values the PotatoLink Regional Cost & Yield Survey (Google Form)
 // expects.
 //
-// Two things about this are load-bearing and easy to break by accident:
+// Things about this that are load-bearing and easy to break by accident:
 //
 // 1. The prefill query parameter name is `entry.<fieldId>`, and that fieldId
 //    is NOT the `questionId` the Forms API returns from forms.get. It is a
@@ -11,11 +11,16 @@
 //    payload, or via Forms' own "Get pre-filled link" tool). Verified by
 //    hand on 29 Aug 2026 — entry.<questionId> silently does nothing; the
 //    field stays empty with no error.
-// 2. The survey's Region question only accepts the four options below (its
-//    own description says so) — these are deliberately the four regions in
-//    the app with `dataQuality: "none"`. Do not add a region here that is
-//    not also an option in the live form, or a submitted response won't
-//    match anything and the rep's link will silently collect junk data.
+// 2. As of 29 Aug 2026 this now covers all 14 regions in the app (not just
+//    the four with no published data): reps use it both to fill gaps and to
+//    get corroborating responses that firm up figures already published,
+//    since a single Nov-2020 budget or a 2005 state aggregate is one data
+//    point, not a trend. Every id/formValue below MUST also exist as an
+//    accepted answer in the live form's Region question, or a submitted
+//    response won't match anything and the rep's link will silently collect
+//    junk data — this list and the form's own options list must be kept in
+//    sync by hand (see docs/adding-a-region.md and the PR that introduced
+//    this file for the exact text to paste into the Forms UI).
 //
 // If the Region or Market segment questions are ever deleted and recreated
 // in Google Forms, both fieldIds below will change and must be re-extracted
@@ -40,8 +45,21 @@ const ENTRY_IDS = {
   segment: "714400903",
 } as const;
 
-/** The only four regions the survey currently accepts — its priority data gaps. */
+/**
+ * All 14 regions in the app. Kept in the same order as regions.json
+ * (sortOrder) so pickers read the same way as the rest of the app.
+ */
 export const SURVEY_REGIONS: SurveyOption[] = [
+  {
+    id: "tas-north",
+    label: "Tasmania — Northern / North-West",
+    formValue: "Tasmania - Northern/North-West",
+  },
+  {
+    id: "tas-south",
+    label: "Tasmania — Southern / Midlands",
+    formValue: "Tasmania - Southern/Midlands",
+  },
   {
     id: "vic-central",
     label: "Victoria — Ballarat / Central",
@@ -58,9 +76,49 @@ export const SURVEY_REGIONS: SurveyOption[] = [
     formValue: "Victoria - Mallee",
   },
   {
+    id: "sa-adelaide",
+    label: "South Australia — Northern Adelaide Plains",
+    formValue: "South Australia - Northern Adelaide Plains",
+  },
+  {
+    id: "sa-riverland",
+    label: "South Australia — Riverland / Mallee",
+    formValue: "South Australia - Riverland/Mallee",
+  },
+  {
+    id: "sa-limestone",
+    label: "South Australia — Limestone Coast",
+    formValue: "South Australia - Limestone Coast",
+  },
+  {
+    id: "nsw-riverina",
+    label: "NSW — Riverina",
+    formValue: "NSW - Riverina",
+  },
+  {
     id: "nsw-tablelands",
     label: "NSW — Central / Southern Tablelands",
     formValue: "NSW - Central/Southern Tablelands",
+  },
+  {
+    id: "wa-manjimup",
+    label: "Western Australia — Manjimup / Pemberton",
+    formValue: "Western Australia - Manjimup/Pemberton",
+  },
+  {
+    id: "wa-perth",
+    label: "Western Australia — Perth / Myalup",
+    formValue: "Western Australia - Perth/Myalup",
+  },
+  {
+    id: "qld-atherton",
+    label: "Queensland — Atherton Tablelands",
+    formValue: "Queensland - Atherton Tablelands",
+  },
+  {
+    id: "qld-lockyer",
+    label: "Queensland — Lockyer Valley",
+    formValue: "Queensland - Lockyer Valley",
   },
 ];
 

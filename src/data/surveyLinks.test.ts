@@ -9,17 +9,22 @@ import {
   SURVEY_SEGMENTS,
 } from "./surveyLinks";
 
-// The survey's Region question only accepts four fixed strings — this
+// The survey's Region question only accepts a fixed set of strings — this
 // mapping exists specifically so nobody can hand out a link for a region
 // the live form does not actually recognise.
 
 describe("survey link mapping", () => {
-  it("only offers regions that are actual app regions with no published data", () => {
+  it("offers every region in the app, so reps can also firm up published figures", () => {
+    expect(SURVEY_REGIONS.length).toBe(regions.length);
     for (const option of SURVEY_REGIONS) {
       const region = regions.find((r) => r.id === option.id);
       expect(region, option.id).toBeDefined();
-      expect(region?.dataQuality, option.id).toBe("none");
     }
+  });
+
+  it("has no duplicate region ids or form values", () => {
+    expect(new Set(SURVEY_REGIONS.map((r) => r.id)).size).toBe(SURVEY_REGIONS.length);
+    expect(new Set(SURVEY_REGIONS.map((r) => r.formValue)).size).toBe(SURVEY_REGIONS.length);
   });
 
   it("offers the four requested market segments", () => {
@@ -42,6 +47,12 @@ describe("survey link mapping", () => {
     const url = buildSurveyFormUrl("vic-central", "seed");
     expect(url).toContain("entry.2115047702=Victoria");
     expect(url).toContain("entry.714400903=Seed");
+  });
+
+  it("prefills a region that already has published data, not just a gap region", () => {
+    const url = buildSurveyFormUrl("tas-north", "french-fry");
+    expect(url).toContain("entry.2115047702=Tasmania");
+    expect(url).toContain("entry.714400903=Processing");
   });
 
   it("ignores an unrecognised region or segment id rather than sending junk text", () => {
