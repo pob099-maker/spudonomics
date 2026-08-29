@@ -48,18 +48,29 @@ export function CalculatorPage() {
   }
 
   const region = regions.find((r) => r.id === regionId)!;
-  const touched = Object.keys(edits).length > 0 || Object.keys(inputOverrides).length > 0;
+  // Unpaid family labour is tracked separately from "touched": typing an
+  // imputed value must not flip the published cost/margin figures above into
+  // edited mode — that basis switch belongs only to the actual cost/market
+  // inputs, never to a figure no source published in the first place.
+  const marketOverrideKeys = Object.keys(inputOverrides).filter(
+    (key) => key !== "unpaidFamilyLabourValueHa" && key !== "unpaidFamilyLabourHrHa",
+  );
+  const touched = Object.keys(edits).length > 0 || marketOverrideKeys.length > 0;
 
   const inputs: MarginInputs = {
     yieldTHa: inputOverrides.yieldTHa ?? profile.yieldTHa,
     priceT: inputOverrides.priceT ?? profile.priceT,
     grossIncomeHa: inputOverrides.grossIncomeHa ?? profile.grossIncomeHa,
     overheadPct: inputOverrides.overheadPct ?? profile.overheadPct,
+    unpaidFamilyLabourValueHa:
+      inputOverrides.unpaidFamilyLabourValueHa ?? profile.unpaidFamilyLabourValueHa,
+    unpaidFamilyLabourHrHa:
+      inputOverrides.unpaidFamilyLabourHrHa ?? profile.unpaidFamilyLabourHrHa,
   };
 
   const result = touched
     ? editedMargin(profile, inputs, edits)
-    : baselineMargin(profile);
+    : baselineMargin(profile, inputs.unpaidFamilyLabourValueHa);
 
   function reset(): void {
     setEdits({});
@@ -174,6 +185,8 @@ export function CalculatorPage() {
         </dl>
       </Card>
 
+      <EconomicMargin result={result} />
+
       <MarketInputs
         inputs={inputs}
         onChange={(patch) => setInputOverrides((current) => ({ ...current, ...patch }))}
@@ -183,6 +196,11 @@ export function CalculatorPage() {
         profile={profile}
         edits={edits}
         onChange={(key, value) => setEdits((current) => ({ ...current, [key]: value }))}
+      />
+
+      <UnpaidLabourInputs
+        inputs={inputs}
+        onChange={(patch) => setInputOverrides((current) => ({ ...current, ...patch }))}
       />
 
       <SourceCard profile={profile} />
@@ -247,6 +265,93 @@ function BasisNotice({
         ? profile.notes
         : "Nothing is shown for cost or margin, because there is nothing to show. Enter your own figures below to model it."}
     </p>
+  );
+}
+
+/**
+ * The full economic cost of production, unpaid family/owner-operator labour
+ * included — shown as its own card, separate from the Results above, because
+ * no source in this dataset publishes it. Folding it into the published
+ * margin would misrepresent the source; keeping it out entirely would hide a
+ * real cost most family-run operations actually carry.
+ */
+function EconomicMargin({ result }: { result: MarginResult }) {
+  if (result.imputedFamilyLabourHa === null) return null;
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">
+        Economic margin <span className="font-normal text-ink/50 dark:text-ink-dark/50">(incl. unpaid family labour)</span>
+      </h2>
+      <p className="mt-1 text-sm text-ink/60 dark:text-ink-dark/60">
+        Not a published figure. It charges the unpaid family/owner-operator time entered below
+        against the crop, at the value you gave it — so it sits apart from the cash cost and
+        margin above.
+      </p>
+      <dl className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        <Figure
+          label="Imputed family labour"
+          value={money(result.imputedFamilyLabourHa)}
+          hint="per hectare, not a cash cost"
+        />
+        <Figure
+          label="Economic cost"
+          value={money(result.economicCostHa)}
+          tone={result.economicCostHa === null ? "unknown" : "neutral"}
+          hint="cash cost + imputed labour"
+        />
+        <Figure
+          label="Economic margin"
+          value={money(result.economicMarginHa)}
+          tone={
+            result.economicMarginHa === null
+              ? "unknown"
+              : result.economicMarginHa >= 0
+                ? "good"
+                : "bad"
+          }
+          hint="per hectare"
+        />
+      </dl>
+    </Card>
+  );
+}
+
+function UnpaidLabourInputs({
+  inputs,
+  onChange,
+}: {
+  inputs: MarginInputs;
+  onChange: (patch: Partial<MarginInputs>) => void;
+}) {
+  return (
+    <Card>
+      <h2 className="font-display text-lg font-bold">Unpaid family &amp; owner-operator labour</h2>
+      <p className="mt-1 text-sm text-ink/60 dark:text-ink-dark/60">
+        Blank here means no source publishes this — it is an economic cost, not a cash one, so
+        it is never added to the cost breakdown or the published margin above. Enter what this
+        time would be worth if paid to see the economic margin it implies.
+      </p>
+      <div className="mt-3 grid gap-3 sm:grid-cols-2">
+        <NumberField
+          id="unpaid-hours"
+          label="Hours worked"
+          unit="hr/ha, per season"
+          value={inputs.unpaidFamilyLabourHrHa}
+          placeholder="Not published"
+          onChange={(value) => onChange({ unpaidFamilyLabourHrHa: value })}
+          hint="Informational — not used in any calculation."
+        />
+        <NumberField
+          id="unpaid-value"
+          label="Imputed value"
+          unit="$/ha"
+          value={inputs.unpaidFamilyLabourValueHa}
+          placeholder="Not published"
+          onChange={(value) => onChange({ unpaidFamilyLabourValueHa: value })}
+          hint="E.g. hours x a casual or award rate. Drives the economic margin above."
+        />
+      </div>
+    </Card>
   );
 }
 

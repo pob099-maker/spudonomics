@@ -61,6 +61,16 @@ blended rate.
 old the budget is, what the pricing structure was, what the source itemised and
 what it did not. The most useful field in the file.
 
+**`unpaidFamilyLabourHrHa` and `unpaidFamilyLabourValueHa`** — unpaid family or
+owner-operator time, kept separate from every other cost line on purpose. No
+published budget in this dataset counts it, so it must never be summed into
+`totalVariableCostHa`, `grossMarginHa`, or any `COST_LINES` entry — doing that
+would misstate a source's own figures with a number it never reported. Leave
+both `null` unless a grower/agronomist survey response actually gives you an
+hours or dollar figure for this region and segment; the calculator only shows
+its separate "economic margin" once one exists, and adding it there never
+changes the published cost or margin shown above it.
+
 ## Adding a whole region
 
 Add to `regions.json` first:
