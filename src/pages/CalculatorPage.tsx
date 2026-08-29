@@ -19,6 +19,7 @@ import {
 } from "../services/grossMargin";
 import { money, perTonne, tonnes, UNKNOWN } from "../services/format";
 import { Card, Figure, PageTitle, QualityPill } from "../components/ui";
+import { ContributeCard } from "../components/ContributeCard";
 import type { CostProfile } from "../types";
 
 const inputClass =
@@ -85,6 +86,8 @@ export function CalculatorPage() {
           what its source actually reports, then change any figure to model your own costs.
         </p>
       </div>
+
+      <ContributeCard />
 
       <Card>
         <div className="grid gap-3 sm:grid-cols-2">
