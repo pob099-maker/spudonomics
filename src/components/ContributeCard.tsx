@@ -33,10 +33,35 @@ function buildContributeLink(regionId: string, segmentId: string): string {
   return `${origin}#/contribute`;
 }
 
+/** Copies text, trying the modern API first and an old-style copy second. */
+async function copyText(text: string): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    return true;
+  } catch {
+    // Fall through: blocked by policy, or the page was not focused.
+  }
+  try {
+    const box = document.createElement("textarea");
+    box.value = text;
+    box.setAttribute("readonly", "");
+    box.style.position = "fixed";
+    box.style.opacity = "0";
+    document.body.appendChild(box);
+    box.select();
+    const ok = document.execCommand("copy");
+    document.body.removeChild(box);
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
 export function ContributeCard() {
   const [regionId, setRegionId] = useState<string>("");
   const [segmentId, setSegmentId] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [copyFailed, setCopyFailed] = useState(false);
 
   const isSpecific = Boolean(regionId && segmentId);
   const surveyUrl = useMemo(
@@ -45,15 +70,19 @@ export function ContributeCard() {
   );
 
   async function copyLink(): Promise<void> {
-    try {
-      await navigator.clipboard.writeText(surveyUrl);
+    setCopyFailed(false);
+    if (await copyText(surveyUrl)) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2500);
-    } catch {
-      // Clipboard access can be blocked by browser policy on some tablets —
-      // the plain URL below still works when the button does not.
-      setCopied(false);
+      return;
     }
+    // Some tablets and in-app browsers (a link opened from an email or Teams)
+    // refuse clipboard access. Say so, and select the link below so a long
+    // press or Ctrl+C finishes the job; a silent button looks broken.
+    setCopied(false);
+    setCopyFailed(true);
+    const text = document.getElementById("survey-url");
+    if (text) window.getSelection()?.selectAllChildren(text);
   }
 
   return (
@@ -132,7 +161,18 @@ export function ContributeCard() {
           {copied ? "Link copied" : "Copy link to share"}
         </button>
       </div>
-      <p className="mt-2 break-all text-xs text-ink/50 dark:text-ink-dark/50">{surveyUrl}</p>
+      {copyFailed ? (
+        <p role="status" className="mt-2 text-sm text-warning">
+          Couldn't copy automatically. The link below is selected: press and hold (or Ctrl+C)
+          to copy it.
+        </p>
+      ) : null}
+      <p
+        id="survey-url"
+        className="mt-2 break-all text-xs text-ink/50 select-all dark:text-ink-dark/50"
+      >
+        {surveyUrl}
+      </p>
     </Card>
   );
 }
