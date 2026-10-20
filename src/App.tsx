@@ -4,6 +4,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { AreasPage } from "./pages/AreasPage";
 import { CalculatorPage } from "./pages/CalculatorPage";
 import { SourcesPage } from "./pages/SourcesPage";
+import { ContributePage } from "./pages/ContributePage";
 
 export function App() {
   return (
@@ -19,6 +20,8 @@ export function App() {
             <Route path="/" element={<CalculatorPage />} />
             <Route path="/areas" element={<AreasPage />} />
             <Route path="/sources" element={<SourcesPage />} />
+            <Route path="/contribute" element={<ContributePage />} />
+            <Route path="/survey/:regionId/:segmentId" element={<ContributePage />} />
           </Routes>
         </Layout>
       </HashRouter>

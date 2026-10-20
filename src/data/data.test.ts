@@ -57,6 +57,16 @@ describe("the shipped dataset", () => {
     }
   });
 
+  it("leaves unpaid family/owner-operator labour unset, since no source here publishes it", () => {
+    // A figure this survey/dataset has not yet gathered stays null, never 0 —
+    // the same discipline as every other cost line. If a region ever gets a
+    // real answer, it belongs here as a genuine number, not a default.
+    for (const profile of costProfiles) {
+      expect(profile.unpaidFamilyLabourValueHa, `${profile.regionId}/${profile.segment}`).toBeNull();
+      expect(profile.unpaidFamilyLabourHrHa, `${profile.regionId}/${profile.segment}`).toBeNull();
+    }
+  });
+
   it("orders regions deterministically", () => {
     const order = listRegions().map((region) => region.sortOrder);
     expect(order).toEqual([...order].sort((a, b) => a - b));

@@ -74,18 +74,42 @@ describe("revenueFor", () => {
   it("prefers published gross income over yield x price", () => {
     // Two-tier and per-bag pricing mean yield x price does not reproduce the
     // published revenue, so the published figure has to win.
-    expect(revenueFor({ yieldTHa: 45, priceT: 550, grossIncomeHa: 17550, overheadPct: null }))
-      .toBe(17550);
+    expect(
+      revenueFor({
+        yieldTHa: 45,
+        priceT: 550,
+        grossIncomeHa: 17550,
+        overheadPct: null,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      }),
+    ).toBe(17550);
   });
 
   it("falls back to yield x price when no revenue was published", () => {
-    expect(revenueFor({ yieldTHa: 40, priceT: 500, grossIncomeHa: null, overheadPct: null }))
-      .toBe(20000);
+    expect(
+      revenueFor({
+        yieldTHa: 40,
+        priceT: 500,
+        grossIncomeHa: null,
+        overheadPct: null,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      }),
+    ).toBe(20000);
   });
 
   it("returns nothing when neither is available", () => {
-    expect(revenueFor({ yieldTHa: null, priceT: null, grossIncomeHa: null, overheadPct: null }))
-      .toBeNull();
+    expect(
+      revenueFor({
+        yieldTHa: null,
+        priceT: null,
+        grossIncomeHa: null,
+        overheadPct: null,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      }),
+    ).toBeNull();
   });
 });
 
@@ -94,7 +118,14 @@ describe("editedMargin — the user's own numbers", () => {
     const base = profile("tas-north", "seed");
     const result = editedMargin(
       base,
-      { yieldTHa: 40, priceT: 500, grossIncomeHa: 20000, overheadPct: 0 },
+      {
+        yieldTHa: 40,
+        priceT: 500,
+        grossIncomeHa: 20000,
+        overheadPct: 0,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      },
       { seedCostHa: 2100, fertiliserCostHa: 1800, machineryCostHa: 900 },
     );
     expect(result.basis).toBe("edited");
@@ -107,17 +138,79 @@ describe("editedMargin — the user's own numbers", () => {
   it("applies overheads as a percentage of revenue", () => {
     const result = editedMargin(
       profile("nsw-riverina", "processing"),
-      { yieldTHa: 35, priceT: 280, grossIncomeHa: 10000, overheadPct: 10 },
+      {
+        yieldTHa: 35,
+        priceT: 280,
+        grossIncomeHa: 10000,
+        overheadPct: 10,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      },
       { seedCostHa: 1000 },
     );
     // Every other line keeps its published value, so assert on the overhead
     // contribution rather than the absolute total.
     const withoutOverheads = editedMargin(
       profile("nsw-riverina", "processing"),
-      { yieldTHa: 35, priceT: 280, grossIncomeHa: 10000, overheadPct: 0 },
+      {
+        yieldTHa: 35,
+        priceT: 280,
+        grossIncomeHa: 10000,
+        overheadPct: 0,
+        unpaidFamilyLabourValueHa: null,
+        unpaidFamilyLabourHrHa: null,
+      },
       { seedCostHa: 1000 },
     );
     expect((result.costHa ?? 0) - (withoutOverheads.costHa ?? 0)).toBeCloseTo(1000, 6);
+  });
+});
+
+describe("unpaid family/owner-operator labour — a separate, imputed cost", () => {
+  it("is absent by default, because no source in this dataset publishes it", () => {
+    const result = baselineMargin(profile("tas-north", "seed"));
+    expect(result.imputedFamilyLabourHa).toBeNull();
+    expect(result.economicCostHa).toBeNull();
+    expect(result.economicMarginHa).toBeNull();
+    // The published cost/margin must be completely unaffected by its absence.
+    expect(result.costHa).toBe(9150);
+    expect(result.marginHa).toBe(11110);
+  });
+
+  it("adds to the cash cost without changing the published figures", () => {
+    const base = profile("tas-north", "seed");
+    const result = baselineMargin(base, 2000);
+    expect(result.imputedFamilyLabourHa).toBe(2000);
+    expect(result.economicCostHa).toBe(9150 + 2000);
+    expect(result.economicMarginHa).toBe(result.revenueHa! - (9150 + 2000));
+    // costHa/marginHa are exactly what the source published — untouched.
+    expect(result.costHa).toBe(9150);
+    expect(result.marginHa).toBe(11110);
+    expect(result.basis).toBe("published");
+  });
+
+  it("stays null on the economic side when there is no cash cost to add it to", () => {
+    const result = baselineMargin(profile("vic-central", "processing_crisping"), 1500);
+    expect(result.imputedFamilyLabourHa).toBe(1500);
+    expect(result.economicCostHa).toBeNull();
+    expect(result.economicMarginHa).toBeNull();
+  });
+
+  it("flows through editedMargin the same way", () => {
+    const result = editedMargin(
+      profile("tas-north", "seed"),
+      {
+        yieldTHa: 40,
+        priceT: 500,
+        grossIncomeHa: 20000,
+        overheadPct: 0,
+        unpaidFamilyLabourValueHa: 3000,
+        unpaidFamilyLabourHrHa: 80,
+      },
+      { seedCostHa: 2100 },
+    );
+    expect(result.imputedFamilyLabourHa).toBe(3000);
+    expect(result.economicCostHa).toBe((result.costHa ?? 0) + 3000);
   });
 });
 

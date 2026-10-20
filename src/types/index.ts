@@ -68,6 +68,20 @@ export interface CostProfile {
   contractCostHa: number | null;
   labourCostHa: number | null;
   labourRateHr: number | null;
+  /**
+   * Unpaid family/owner-operator labour: hours per hectare per season,
+   * informational only. No source publishes this — it exists so a grower or
+   * agronomist survey response can show its working, not to feed a total.
+   */
+  unpaidFamilyLabourHrHa: number | null;
+  /**
+   * The imputed $/ha value of that unpaid labour, e.g. hours x an award or
+   * casual rate. Deliberately kept out of `totalVariableCostHa` and every
+   * `COST_LINES` sum: it is a real economic cost, but not a cash one, and no
+   * published budget this app cites ever counts it. See grossMargin.ts for
+   * how it surfaces as a separate "economic margin" instead.
+   */
+  unpaidFamilyLabourValueHa: number | null;
   postHarvestCostHa: number | null;
   overheadPct: number | null;
 

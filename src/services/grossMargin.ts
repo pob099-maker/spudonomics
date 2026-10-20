@@ -62,6 +62,16 @@ export interface MarginInputs {
   priceT: number | null;
   grossIncomeHa: number | null;
   overheadPct: number | null;
+  /**
+   * The imputed $/ha value of unpaid family/owner-operator labour. Never
+   * folded into `costHa` or `marginHa` — no source in this dataset publishes
+   * it, so mixing it into the "as published" figures would misstate them.
+   * It only feeds `economicCostHa` / `economicMarginHa`, which is a distinct,
+   * clearly-labelled figure that appears only once a value exists.
+   */
+  unpaidFamilyLabourValueHa: number | null;
+  /** Hours/ha behind that value, informational only — not used in any total. */
+  unpaidFamilyLabourHrHa: number | null;
 }
 
 export interface MarginResult {
@@ -83,6 +93,20 @@ export interface MarginResult {
    * quoted as this region's margin. Drives every warning in the UI.
    */
   incomplete: boolean;
+  /** The imputed $/ha value of unpaid family/owner-operator labour, pass-through. */
+  imputedFamilyLabourHa: number | null;
+  /**
+   * `costHa` plus imputed unpaid labour — the full economic cost of
+   * production, not just the cash cost. Null whenever either side is
+   * unavailable, so it is never presented on a partial reading.
+   */
+  economicCostHa: number | null;
+  /**
+   * `revenueHa` minus `economicCostHa`. This is the margin once unpaid family
+   * labour is valued and charged against the crop — kept separate from
+   * `marginHa`, which stays exactly what the source published.
+   */
+  economicMarginHa: number | null;
 }
 
 function numberOr(value: unknown, fallback: number | null): number | null {
@@ -113,7 +137,13 @@ export function revenueFor(inputs: MarginInputs): number | null {
  * The baseline as published: no re-derivation, no zero-filling. This is what a
  * region shows before anybody touches an input.
  */
-export function baselineMargin(profile: CostProfile): MarginResult {
+export function baselineMargin(
+  profile: CostProfile,
+  // Lets the calculator page reflect a typed-in imputed labour value without
+  // switching the rest of the page's cost/margin figures away from what the
+  // source published — those two things must be free to vary independently.
+  imputedFamilyLabourHa: number | null = profile.unpaidFamilyLabourValueHa,
+): MarginResult {
   const lines = costLines(profile);
   const known = lines.filter((line) => line.valueHa !== null);
   const itemisedHa = known.reduce((sum, line) => sum + (line.valueHa ?? 0), 0);
@@ -126,6 +156,8 @@ export function baselineMargin(profile: CostProfile): MarginResult {
     priceT: profile.priceT,
     grossIncomeHa: profile.grossIncomeHa,
     overheadPct: profile.overheadPct,
+    unpaidFamilyLabourValueHa: profile.unpaidFamilyLabourValueHa,
+    unpaidFamilyLabourHrHa: profile.unpaidFamilyLabourHrHa,
   });
 
   const published = profile.totalVariableCostHa;
@@ -147,6 +179,7 @@ export function baselineMargin(profile: CostProfile): MarginResult {
       // A published total is a complete cost side even when the breakdown is
       // partial, so the results stand on their own.
       incomplete: false,
+      imputedFamilyLabourHa,
     });
   }
 
@@ -165,6 +198,7 @@ export function baselineMargin(profile: CostProfile): MarginResult {
       missingLines,
       yieldTHa: profile.yieldTHa,
       incomplete: true,
+      imputedFamilyLabourHa,
     });
   }
 
@@ -180,6 +214,7 @@ export function baselineMargin(profile: CostProfile): MarginResult {
     missingLines,
     yieldTHa: profile.yieldTHa,
     incomplete: true,
+    imputedFamilyLabourHa,
   });
 }
 
@@ -213,6 +248,7 @@ export function editedMargin(
     missingLines: lines.filter((line) => line.valueHa === null).map((line) => line.label),
     yieldTHa: inputs.yieldTHa,
     incomplete: false,
+    imputedFamilyLabourHa: inputs.unpaidFamilyLabourValueHa,
   });
 }
 
@@ -226,8 +262,16 @@ function finish(parts: {
   missingLines: string[];
   yieldTHa: number | null;
   incomplete: boolean;
+  imputedFamilyLabourHa: number | null;
 }): MarginResult {
-  const { revenueHa, costHa, marginHa, yieldTHa } = parts;
+  const { revenueHa, costHa, marginHa, yieldTHa, imputedFamilyLabourHa } = parts;
+
+  // Only ever computed when both sides are real numbers — the same null !=
+  // zero discipline the rest of this module enforces for published costs.
+  const economicCostHa =
+    costHa !== null && imputedFamilyLabourHa !== null ? costHa + imputedFamilyLabourHa : null;
+  const economicMarginHa =
+    revenueHa !== null && economicCostHa !== null ? revenueHa - economicCostHa : null;
 
   // Breakeven divides by price and by yield, so it is only meaningful with a
   // real cost behind it. Showing "0 t/ha" because the cost side was empty is
@@ -249,5 +293,8 @@ function finish(parts: {
     unitemisedHa: parts.unitemisedHa,
     missingLines: parts.missingLines,
     incomplete: parts.incomplete,
+    imputedFamilyLabourHa,
+    economicCostHa,
+    economicMarginHa,
   };
 }
