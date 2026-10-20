@@ -4,6 +4,7 @@ import { useTheme } from "../contexts/ThemeContext";
 
 const NAV_ITEMS = [
   { to: "/", label: "Calculator" },
+  { to: "/areas", label: "Areas" },
   { to: "/sources", label: "Data sources" },
 ];
 

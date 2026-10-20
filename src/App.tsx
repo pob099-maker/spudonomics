@@ -1,6 +1,7 @@
 import { HashRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "./components/Layout";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { AreasPage } from "./pages/AreasPage";
 import { CalculatorPage } from "./pages/CalculatorPage";
 import { SourcesPage } from "./pages/SourcesPage";
 
@@ -16,6 +17,7 @@ export function App() {
         <Layout>
           <Routes>
             <Route path="/" element={<CalculatorPage />} />
+            <Route path="/areas" element={<AreasPage />} />
             <Route path="/sources" element={<SourcesPage />} />
           </Routes>
         </Layout>

@@ -1,0 +1,144 @@
+{
+  "_note": "Crosswalk from Spudonomics districts (regions.json) to the shared PotatoLink areas (areas.json). Coverage says whether the district's figures describe the whole area or part of it.",
+  "districts": [
+    {
+      "districtId": "tas-north",
+      "areas": [
+        {
+          "areaId": "ne-tas-scottsdale",
+          "coverage": "full"
+        },
+        {
+          "areaId": "nw-tas-sisters-creek",
+          "coverage": "full"
+        }
+      ],
+      "note": "One Spudonomics district spans two PotatoLink areas."
+    },
+    {
+      "districtId": "tas-south",
+      "areas": [
+        {
+          "areaId": "midlands-longford",
+          "coverage": "full"
+        }
+      ],
+      "note": "Low Rainfall budget models the Midlands district."
+    },
+    {
+      "districtId": "vic-central",
+      "areas": [
+        {
+          "areaId": "ballarat",
+          "coverage": "full"
+        }
+      ],
+      "note": "No published economics."
+    },
+    {
+      "districtId": "vic-gippsland",
+      "areas": [
+        {
+          "areaId": "gippsland-thorpdale",
+          "coverage": "full"
+        }
+      ],
+      "note": "No published economics."
+    },
+    {
+      "districtId": "vic-mallee",
+      "areas": [
+        {
+          "areaId": "mallee-loxton",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Victorian side of the Mallee / Loxton area only. No published economics."
+    },
+    {
+      "districtId": "sa-adelaide",
+      "areas": [
+        {
+          "areaId": "murray-bridge-adelaide-plains",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Northern Adelaide Plains (Virginia); Murray Bridge is not covered."
+    },
+    {
+      "districtId": "sa-riverland",
+      "areas": [
+        {
+          "areaId": "mallee-loxton",
+          "coverage": "partial"
+        }
+      ],
+      "note": "South Australian side of the Mallee / Loxton area (Riverland). Shares the area with vic-mallee; the area view shows both and never averages them."
+    },
+    {
+      "districtId": "sa-limestone",
+      "areas": [
+        {
+          "areaId": "mt-gambier-warrnambool",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Limestone Coast covers Mt Gambier; Warrnambool (Vic) is not covered."
+    },
+    {
+      "districtId": "nsw-riverina",
+      "areas": [
+        {
+          "areaId": "riverina-tablelands-coast",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Riverina only; the Tablelands and Coast are not covered."
+    },
+    {
+      "districtId": "nsw-tablelands",
+      "areas": [
+        {
+          "areaId": "riverina-tablelands-coast",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Tablelands only, and no separate budget was ever published."
+    },
+    {
+      "districtId": "wa-manjimup",
+      "areas": [
+        {
+          "areaId": "manjimup-jindong",
+          "coverage": "full"
+        }
+      ],
+      "note": "District-specific water use; yield and margin are state-level estimates."
+    },
+    {
+      "districtId": "wa-perth",
+      "areas": [],
+      "note": "Perth / Myalup is not one of the proposal's 12 areas. Kept as reference data with no PotatoLink area."
+    },
+    {
+      "districtId": "qld-atherton",
+      "areas": [
+        {
+          "areaId": "atherton",
+          "coverage": "full"
+        }
+      ],
+      "note": "Regional budget, but from 1998."
+    },
+    {
+      "districtId": "qld-lockyer",
+      "areas": [
+        {
+          "areaId": "lockyer-bundaberg",
+          "coverage": "partial"
+        }
+      ],
+      "note": "Lockyer Valley only; Bundaberg is not covered. Budget from 1998."
+    }
+  ]
+}

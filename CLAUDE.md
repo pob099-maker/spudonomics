@@ -22,6 +22,17 @@ own published total. Everything below follows from not doing that again.
   missing cost would silently flatter.
 - The UI renders an absent figure as an em dash and says "not published".
 
+## Current work: PT26001 framework
+
+This app is being joined to the PotatoLink PT26001 framework, alongside the Rep
+CRM and the PT25003 consultation tool. The shared regions and areas are in
+`docs/REGIONS.md` (source of truth: the proposal) and the crosswalk from this
+app's districts to those areas is in `src/data/area-map.json`. The working
+backlog is `docs/ROADMAP.md`; read it before starting a task and tick items off
+there. Nothing about this work changes the rule above: a figure the source never
+published is unknown, not zero, and the crosswalk must never be used to borrow a
+neighbour's number.
+
 ## Tech stack
 
 - Frontend: React 18 + TypeScript (strict mode)
