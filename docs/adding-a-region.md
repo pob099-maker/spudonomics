@@ -4,9 +4,9 @@ Everything the app shows lives in three files:
 
 - `src/data/regions.json` — the fourteen districts (the file and the `Region`
   type keep their old names; in the app and these docs they are *districts*, to
-  avoid clashing with the 7 PotatoLink regions)
+  avoid clashing with the 7 AgAims regions)
 - `src/data/cost-profiles.json` — one entry per district and market segment
-- `src/data/area-map.json` — which PotatoLink areas each district speaks for
+- `src/data/area-map.json` — which AgAims areas each district speaks for
 
 Editing them is a pull request, which is deliberate: these figures carry
 citations, and a change to one should be reviewable.
@@ -105,7 +105,7 @@ Then add it to `area-map.json`, in the same pull request:
 
 - `coverage` is `full` only if the district's figures describe the whole area.
   Two districts in one area are both `partial`; the tests enforce it.
-- A district outside all 12 PotatoLink areas gets `"areas": []` and a note
+- A district outside all 12 AgAims areas gets `"areas": []` and a note
   saying why. Do not force it into one.
 - The crosswalk only says where a figure applies. It must never be used to fill
   a gap in one area with a neighbour's number.

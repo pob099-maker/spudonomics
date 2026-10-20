@@ -4,7 +4,7 @@
 
 Regional potato gross margin baselines for Australia, drawn from published
 budgets, with every figure traceable to its source. Sister project to
-PotatoLink Fieldwork; same stack, same conventions, separate deployment.
+AgAims Fieldwork; same stack, same conventions, separate deployment.
 
 It replaces a Perplexity-hosted prototype that overstated the gross margin on
 eight of fourteen regions — by 848% in South Australia — by summing itemised
@@ -24,7 +24,7 @@ own published total. Everything below follows from not doing that again.
 
 ## Current work: PT26001 framework
 
-This app is being joined to the PotatoLink PT26001 framework, alongside the Rep
+This app is being joined to the AgAims PT26001 framework, alongside the Rep
 CRM and the PT25003 consultation tool. The shared regions and areas are in
 `docs/REGIONS.md` (source of truth: the proposal) and the crosswalk from this
 app's districts to those areas is in `src/data/area-map.json`. The working
@@ -36,7 +36,7 @@ neighbour's number.
 ## Tech stack
 
 - Frontend: React 18 + TypeScript (strict mode)
-- Styling: Tailwind CSS v4, PotatoLink brand tokens in `src/index.css`
+- Styling: Tailwind CSS v4, AgAims brand tokens in `src/index.css`
 - Validation: Zod, run against the dataset in the test suite
 - Build: Vite
 - Tests: Vitest
@@ -111,7 +111,7 @@ here, because there is nothing to sync.
 
 ## Brand
 
-Follows the PotatoLink brand guidelines, shared with Fieldwork.
+Follows the AgAims brand guidelines, shared with Fieldwork.
 
 - Colours are tokens in `src/index.css`. Use the names (`primary`, `accent`,
   `paper`, `ink`), never raw hex in components.

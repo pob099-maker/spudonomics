@@ -1,5 +1,5 @@
 {
-  "_note": "Crosswalk from Spudonomics districts (regions.json) to the shared PotatoLink areas (areas.json). Coverage says whether the district's figures describe the whole area or part of it.",
+  "_note": "Crosswalk from Spudonomics districts (regions.json) to the shared AgAims areas (areas.json). Coverage says whether the district's figures describe the whole area or part of it.",
   "districts": [
     {
       "districtId": "tas-north",
@@ -13,7 +13,7 @@
           "coverage": "full"
         }
       ],
-      "note": "One Spudonomics district spans two PotatoLink areas."
+      "note": "One Spudonomics district spans two AgAims areas."
     },
     {
       "districtId": "tas-south",
@@ -118,7 +118,7 @@
     {
       "districtId": "wa-perth",
       "areas": [],
-      "note": "Perth / Myalup is not one of the proposal's 12 areas. Kept as reference data with no PotatoLink area."
+      "note": "Perth / Myalup is not one of the proposal's 12 areas. Kept as reference data with no AgAims area."
     },
     {
       "districtId": "qld-atherton",

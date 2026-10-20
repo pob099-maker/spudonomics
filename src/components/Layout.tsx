@@ -73,7 +73,7 @@ export function Layout({ children }: { children: ReactNode }) {
       </header>
       <main className="mx-auto max-w-4xl px-4 py-4">{children}</main>
       <footer className="mx-auto max-w-4xl px-4 pb-8 pt-2 text-sm text-ink/50 dark:text-ink-dark/50">
-        Built for PotatoLink and the Lifecycles project. Every figure traces to a published
+        Built for AgAims and the Lifecycles project. Every figure traces to a published
         source, and every gap is shown as a gap.
       </footer>
     </div>

@@ -1,6 +1,6 @@
-# PotatoLink regions and areas (PT26001)
+# AgAims regions and areas (PT26001)
 
-**Source of truth: the PT26001 PotatoLink 2 proposal** (Table 1, "Regional Summary", and the team section). This file is copied into both the Rep CRM and the PT25003 consultation tool. Change it in one place, then copy it to the other, so the two tools never disagree.
+**Source of truth: the PT26001 proposal** (Table 1, "Regional Summary", and the team section). This file is copied into both the Rep CRM and the PT25003 consultation tool. Change it in one place, then copy it to the other, so the two tools never disagree.
 
 ## Two layers
 

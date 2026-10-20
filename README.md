@@ -2,11 +2,11 @@
 
 Regional potato gross margin baselines for Australia. Pick a district and market
 segment, see what the published budget actually reports, then edit any figure to
-model your own costs. The Areas page reads the same budgets by PotatoLink area
+model your own costs. The Areas page reads the same budgets by AgAims area
 and shows where the evidence is thin.
 
-Built for PotatoLink and the Lifecycles project. Sister project to
-[PotatoLink Fieldwork](https://github.com/pob099-maker/potatolink-fieldwork).
+Built for AgAims and the Lifecycles project. Sister project to
+AgAims Fieldwork.
 
 ## The point
 

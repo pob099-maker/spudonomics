@@ -1,4 +1,4 @@
-// What the published budgets can say about each PotatoLink area.
+// What the published budgets can say about each AgAims area.
 //
 // Spudonomics holds figures by district; the PT26001 framework works by area.
 // This joins them through the crosswalk (src/data/area-map.json) and reports,
@@ -13,12 +13,12 @@
 import { listRegions, profilesForRegion } from "../data";
 import {
   districtsForArea,
-  potatoLinkAreas,
-  potatoLinkRegions,
+  agAimsAreas,
+  agAimsRegions,
   regionForArea,
   type AreaCoverage,
-  type PotatoLinkArea,
-  type PotatoLinkRegion,
+  type AgAimsArea,
+  type AgAimsRegion,
 } from "../data/areaMap";
 import { baselineMargin } from "./grossMargin";
 import type { DataQuality, Region } from "../types";
@@ -46,8 +46,8 @@ export interface AreaDistrictView {
 export type AreaEvidence = DataQuality;
 
 export interface AreaView {
-  area: PotatoLinkArea;
-  region: PotatoLinkRegion;
+  area: AgAimsArea;
+  region: AgAimsRegion;
   districts: AreaDistrictView[];
   evidence: AreaEvidence;
   /** Age of the oldest figure shown for the area, or null when there are none. */
@@ -85,7 +85,7 @@ function figuresFor(districtId: string): PublishedFigure[] {
 const RANK: Record<DataQuality, number> = { regional: 2, state_proxy: 1, none: 0 };
 
 export function viewArea(areaId: string): AreaView | undefined {
-  const area = potatoLinkAreas.find((candidate) => candidate.id === areaId);
+  const area = agAimsAreas.find((candidate) => candidate.id === areaId);
   const region = regionForArea(areaId);
   if (area === undefined || region === undefined) return undefined;
 
@@ -120,10 +120,10 @@ export function viewArea(areaId: string): AreaView | undefined {
 }
 
 /** Every area, grouped by region in the order the framework lists them. */
-export function listAreaViews(): { region: PotatoLinkRegion; areas: AreaView[] }[] {
-  return potatoLinkRegions.map((region) => ({
+export function listAreaViews(): { region: AgAimsRegion; areas: AreaView[] }[] {
+  return agAimsRegions.map((region) => ({
     region,
-    areas: potatoLinkAreas
+    areas: agAimsAreas
       .filter((area) => area.regionId === region.id)
       .flatMap((area) => viewArea(area.id) ?? []),
   }));
@@ -149,10 +149,10 @@ export function staleAreas(currentYear: number, maxAgeYears = 10): AreaView[] {
     );
 }
 
-/** Districts that sit outside every PotatoLink area (kept as reference data). */
+/** Districts that sit outside every AgAims area (kept as reference data). */
 export function unmappedDistricts(): Region[] {
   const mapped = new Set(
-    potatoLinkAreas.flatMap((area) => districtsForArea(area.id).map((d) => d.district.id)),
+    agAimsAreas.flatMap((area) => districtsForArea(area.id).map((d) => d.district.id)),
   );
   return listRegions().filter((district) => !mapped.has(district.id));
 }

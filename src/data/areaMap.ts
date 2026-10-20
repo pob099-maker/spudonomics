@@ -1,7 +1,7 @@
-// The crosswalk between Spudonomics districts and the shared PotatoLink areas.
+// The crosswalk between Spudonomics districts and the shared AgAims areas.
 //
 // Spudonomics organises its published budgets by district (the `Region` type in
-// this app, fourteen of them). The PotatoLink framework organises everything by
+// this app, fourteen of them). The AgAims framework organises everything by
 // two layers: 7 regions and 12 areas, defined in docs/REGIONS.md, which comes
 // from the PT26001 proposal. This file joins the two without changing either.
 //
@@ -36,12 +36,12 @@ export const areaMapSchema = z.object({
 
 export type AreaCoverage = z.infer<typeof coverage>;
 
-export interface PotatoLinkRegion {
+export interface AgAimsRegion {
   id: string;
   name: string;
 }
 
-export interface PotatoLinkArea {
+export interface AgAimsArea {
   id: string;
   name: string;
   regionId: string;
@@ -55,22 +55,22 @@ export interface AreaDistrict {
 const shared = areasFileSchema.parse(areasJson);
 const map = areaMapSchema.parse(areaMapJson);
 
-export const potatoLinkRegions: PotatoLinkRegion[] = shared.regions;
-export const potatoLinkAreas: PotatoLinkArea[] = shared.areas;
+export const agAimsRegions: AgAimsRegion[] = shared.regions;
+export const agAimsAreas: AgAimsArea[] = shared.areas;
 export const districtAreaMap = map.districts;
 
-export function findArea(areaId: string): PotatoLinkArea | undefined {
-  return potatoLinkAreas.find((area) => area.id === areaId);
+export function findArea(areaId: string): AgAimsArea | undefined {
+  return agAimsAreas.find((area) => area.id === areaId);
 }
 
 /** The region an area belongs to. Always derived from the area, never stored separately. */
-export function regionForArea(areaId: string): PotatoLinkRegion | undefined {
+export function regionForArea(areaId: string): AgAimsRegion | undefined {
   const area = findArea(areaId);
-  return area === undefined ? undefined : potatoLinkRegions.find((r) => r.id === area.regionId);
+  return area === undefined ? undefined : agAimsRegions.find((r) => r.id === area.regionId);
 }
 
-/** Areas a district's figures speak to. Empty for a district outside the PotatoLink areas. */
-export function areasForDistrict(districtId: string): { area: PotatoLinkArea; coverage: AreaCoverage }[] {
+/** Areas a district's figures speak to. Empty for a district outside the AgAims areas. */
+export function areasForDistrict(districtId: string): { area: AgAimsArea; coverage: AreaCoverage }[] {
   const entry = districtAreaMap.find((item) => item.districtId === districtId);
   if (entry === undefined) return [];
   return entry.areas.flatMap(({ areaId, coverage: how }) => {

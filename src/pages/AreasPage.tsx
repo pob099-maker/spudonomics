@@ -1,4 +1,4 @@
-// The area view: the same published budgets, read by PotatoLink area instead of
+// The area view: the same published budgets, read by AgAims area instead of
 // by Spudonomics district.
 //
 // An area is where PT26001 works; a district is where a budget was written.
@@ -36,9 +36,9 @@ export function AreasPage() {
   return (
     <div className="space-y-4">
       <div>
-        <PageTitle>PotatoLink areas</PageTitle>
+        <PageTitle>AgAims areas</PageTitle>
         <p className="mt-1 text-ink/60 dark:text-ink-dark/60">
-          The published budgets, read by the 12 PotatoLink areas rather than by the district
+          The published budgets, read by the 12 AgAims areas rather than by the district
           each budget was written for. Nothing here is averaged across districts or borrowed
           from a neighbour: an area with no regional figures says so.
         </p>
@@ -142,7 +142,7 @@ function Overview() {
 
       {outside.length > 0 ? (
         <Card>
-          <h2 className="font-display text-lg font-bold">Outside the PotatoLink areas</h2>
+          <h2 className="font-display text-lg font-bold">Outside the AgAims areas</h2>
           <p className="mt-1 text-sm text-ink/70 dark:text-ink-dark/70">
             {outside.map((district) => district.name).join(", ")} is kept as reference data.
             It is not one of the 12 areas and is not forced into one.

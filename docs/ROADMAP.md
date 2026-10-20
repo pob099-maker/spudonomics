@@ -1,8 +1,8 @@
-# Spudonomics roadmap — joining the PotatoLink framework (PT26001)
+# Spudonomics roadmap — joining the AgAims framework (PT26001)
 
 Spudonomics is a reference dataset, not a data-collecting tool: no people, no
 database, no backend. Its place in the PT26001 framework is to give the M&E
-economic context for each PotatoLink area, and to do it without ever
+economic context for each AgAims area, and to do it without ever
 overstating what the sources published. This is a backlog, not a schedule.
 
 Status key: `[ ]` not started · `[~]` in progress · `[x]` done.
@@ -26,10 +26,10 @@ regional economics, which have state-level stand-ins, which have nothing.
 2. **A district that covers part of an area says so** (`coverage: "partial"`).
    When two districts share an area, show both or choose explicitly; never
    average them.
-3. **A district outside the PotatoLink areas stays as reference data** (Perth /
+3. **A district outside the AgAims areas stays as reference data** (Perth /
    Myalup). Do not force it into an area.
 4. **No personal data comes in.** This app holds published budgets only. Grower
-   costs collected through PotatoLink go to the consultation tool or the CRM
+   costs collected through AgAims go to the consultation tool or the CRM
    under their own rules, not here.
 5. `docs/REGIONS.md` and `src/data/areas.json` change together, and only after
    the shared source of truth changes.
@@ -51,7 +51,7 @@ regional economics, which have state-level stand-ins, which have nothing.
 ## S2 — Wording and structure (done)
 
 - [x] Say "district" instead of "region" in the UI and docs where it refers to
-      Spudonomics' own 14 units, to avoid clashing with the 7 PotatoLink
+      Spudonomics' own 14 units, to avoid clashing with the 7 AgAims
       regions. (The `Region` type and `regions.json` keep their names;
       renaming them is optional and touches every import.)
 - [x] Update `docs/adding-a-region.md` to say a new district needs an entry in
@@ -65,7 +65,7 @@ regional economics, which have state-level stand-ins, which have nothing.
 
 The Areas page (`src/pages/AreasPage.tsx`, logic in `src/services/areaView.ts`).
 
-- [x] Let a reader pick a PotatoLink area (grouped by region) as well as a
+- [x] Let a reader pick a AgAims area (grouped by region) as well as a
       district. The calculator also opens on a district from `?district=<id>`.
 - [x] For an area, show each linked district's figures with its data quality,
       source year and coverage ("Covers Lockyer Valley only").
@@ -86,7 +86,7 @@ budgets are old (1998 and 2005 data). Refreshing them is field work, not coding.
       Manjimup / Jindong have only a state-wide stand-in. It also lists regional
       figures more than ten years old (Atherton, Lockyer Valley and Bundaberg,
       Riverina).
-- [ ] **Decision for Peter, not code:** whether PotatoLink regional reps can
+- [ ] **Decision for Peter, not code:** whether AgAims regional reps can
       gather cost-of-production information during 2027, and where it would be
       held. It must not be stored here as if it were a published budget.
 - [x] Label data age on every screen and in any export. The Areas page shows
@@ -107,7 +107,7 @@ budgets are old (1998 and 2005 data). Refreshing them is field work, not coding.
 - [ ] Provide Fieldwork with published gross margins by area to replace its
       placeholder economics (a data file it reads, not a live link). The JSON
       export is that file; Fieldwork has to be changed to read it.
-- [ ] Decide how the PotatoLink M&E cites Spudonomics for "changes in practice
+- [ ] Decide how the AgAims M&E cites Spudonomics for "changes in practice
       lead to improvements in economic outcomes", including the caveat that
       gross-margin budgets are published figures, not observed changes.
       (A decision for Peter.)
@@ -116,7 +116,7 @@ budgets are old (1998 and 2005 data). Refreshing them is field work, not coding.
 
 - ~~When two districts share an area (Mallee), which budget does an area view
   show by default?~~ Both, side by side, never averaged.
-- Is Perth / Myalup worth keeping visible in a PotatoLink-facing view, given it
+- Is Perth / Myalup worth keeping visible in a AgAims-facing view, given it
   is outside the proposal's areas?
 - Should NSW be split into Riverina, Tablelands and Coast areas once activity
   starts? (Open question in `REGIONS.md`.)

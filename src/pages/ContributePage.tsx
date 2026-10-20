@@ -285,7 +285,7 @@ export function ContributePage() {
               }
             />
             <span>
-              I consent to this anonymised, regionally-aggregated data being used in PotatoLink's
+              I consent to this anonymised, regionally-aggregated data being used in AgAims's
               Spudonomics tool.
             </span>
           </label>

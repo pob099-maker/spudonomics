@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { costProfiles } from "../data";
-import { potatoLinkAreas } from "../data/areaMap";
+import { agAimsAreas } from "../data/areaMap";
 import {
   areaCoverageCsv,
   areaCoverageRows,
@@ -32,8 +32,8 @@ describe("dataYearOf", () => {
 });
 
 describe("viewArea", () => {
-  it("builds a view for every PotatoLink area", () => {
-    for (const area of potatoLinkAreas) {
+  it("builds a view for every AgAims area", () => {
+    for (const area of agAimsAreas) {
       expect(viewArea(area.id), area.id).toBeDefined();
     }
     expect(viewArea("nowhere")).toBeUndefined();
@@ -121,7 +121,7 @@ describe("gaps and freshness", () => {
     expect(stale).not.toContain("midlands-longford");
   });
 
-  it("reports the district kept outside the PotatoLink areas", () => {
+  it("reports the district kept outside the AgAims areas", () => {
     expect(unmappedDistricts().map((district) => district.id)).toEqual(["wa-perth"]);
   });
 });
@@ -131,7 +131,7 @@ describe("areaCoverageRows", () => {
 
   it("covers every area and carries only ids, not names", () => {
     const areaIds = new Set(rows.map((row) => row.areaId));
-    expect([...areaIds].sort()).toEqual(potatoLinkAreas.map((area) => area.id).sort());
+    expect([...areaIds].sort()).toEqual(agAimsAreas.map((area) => area.id).sort());
   });
 
   it("uses null for a margin nobody published, never 0", () => {
@@ -150,7 +150,7 @@ describe("areaCoverageCsv", () => {
   const csv = areaCoverageCsv();
 
   it("has a row for every area", () => {
-    for (const area of potatoLinkAreas) expect(csv, area.id).toContain(area.name);
+    for (const area of agAimsAreas) expect(csv, area.id).toContain(area.name);
   });
 
   it("says 'not published' for a gap instead of leaving a number out or writing zero", () => {
