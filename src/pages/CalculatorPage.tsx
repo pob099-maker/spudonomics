@@ -1,4 +1,4 @@
-// The calculator: pick a region and segment, see what the published budget
+// The calculator: pick a district and segment, see what the published budget
 // actually says, then edit any figure to model your own costs.
 //
 // The design problem this page solves is that the underlying budgets are
@@ -8,6 +8,7 @@
 // dropping it.
 
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { listRegions, profilesForRegion } from "../data";
 import {
   baselineMargin,
@@ -28,7 +29,11 @@ const inputClass =
 
 export function CalculatorPage() {
   const regions = useMemo(() => listRegions(), []);
-  const [regionId, setRegionId] = useState(regions[0].id);
+  // The Areas page links here with ?district=<id>. An id that matches nothing
+  // falls back to the first district rather than an empty screen.
+  const [params] = useSearchParams();
+  const requested = regions.find((candidate) => candidate.id === params.get("district"));
+  const [regionId, setRegionId] = useState((requested ?? regions[0]).id);
 
   const profiles = useMemo(() => profilesForRegion(regionId), [regionId]);
   const [segment, setSegment] = useState<string | null>(null);
@@ -82,7 +87,7 @@ export function CalculatorPage() {
       <div>
         <PageTitle>Potato gross margins</PageTitle>
         <p className="mt-1 text-ink/60 dark:text-ink-dark/60">
-          Published regional budgets for Australian potato production. Pick a region to see
+          Published budgets for Australian potato-growing districts. Pick a district to see
           what its source actually reports, then change any figure to model your own costs.
         </p>
       </div>
@@ -92,11 +97,11 @@ export function CalculatorPage() {
       <Card>
         <div className="grid gap-3 sm:grid-cols-2">
           <div>
-            <label htmlFor="region" className="mb-1 block text-sm font-medium">
-              Region
+            <label htmlFor="district" className="mb-1 block text-sm font-medium">
+              District
             </label>
             <select
-              id="region"
+              id="district"
               value={regionId}
               onChange={(event) => {
                 setRegionId(event.target.value);
@@ -253,7 +258,7 @@ function BasisNotice({
       <p className="rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
         <span className="font-medium text-warning">Incomplete — treat as indicative.</span>{" "}
         This budget itemises some costs but publishes no total, so there is no way to know
-        what is missing. The margin shown is an upper bound, not this region's margin.
+        what is missing. The margin shown is an upper bound, not this district's margin.
       </p>
     );
   }

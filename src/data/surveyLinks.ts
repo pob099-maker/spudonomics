@@ -1,5 +1,5 @@
 // Mapping between the app's own region/segment identifiers and the exact
-// prefill values the PotatoLink Regional Cost & Yield Survey (Google Form)
+// prefill values the AgAims Regional Cost & Yield Survey (Google Form)
 // expects.
 //
 // Things about this that are load-bearing and easy to break by accident:

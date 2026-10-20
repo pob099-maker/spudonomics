@@ -1,0 +1,95 @@
+{
+  "_note": "Machine-readable copy of docs/REGIONS.md, the shared source of truth (from the PT26001 proposal, Table 1). Change REGIONS.md first, then this file.",
+  "regions": [
+    {
+      "id": "sa",
+      "name": "South Australia and borders"
+    },
+    {
+      "id": "tas",
+      "name": "Tasmania"
+    },
+    {
+      "id": "ballarat",
+      "name": "Ballarat"
+    },
+    {
+      "id": "gippsland",
+      "name": "Gippsland"
+    },
+    {
+      "id": "qld",
+      "name": "Queensland"
+    },
+    {
+      "id": "wa",
+      "name": "Western Australia"
+    },
+    {
+      "id": "nsw",
+      "name": "New South Wales"
+    }
+  ],
+  "areas": [
+    {
+      "id": "mallee-loxton",
+      "name": "Mallee / Loxton",
+      "regionId": "sa"
+    },
+    {
+      "id": "murray-bridge-adelaide-plains",
+      "name": "Murray Bridge / Adelaide Plains",
+      "regionId": "sa"
+    },
+    {
+      "id": "mt-gambier-warrnambool",
+      "name": "Mt Gambier / Warrnambool",
+      "regionId": "sa"
+    },
+    {
+      "id": "midlands-longford",
+      "name": "Midlands / Longford",
+      "regionId": "tas"
+    },
+    {
+      "id": "ne-tas-scottsdale",
+      "name": "NE Tasmania / Scottsdale",
+      "regionId": "tas"
+    },
+    {
+      "id": "nw-tas-sisters-creek",
+      "name": "NW Tasmania / Sisters Creek",
+      "regionId": "tas"
+    },
+    {
+      "id": "ballarat",
+      "name": "Ballarat",
+      "regionId": "ballarat"
+    },
+    {
+      "id": "gippsland-thorpdale",
+      "name": "Gippsland / Thorpdale",
+      "regionId": "gippsland"
+    },
+    {
+      "id": "atherton",
+      "name": "Atherton",
+      "regionId": "qld"
+    },
+    {
+      "id": "lockyer-bundaberg",
+      "name": "Lockyer Valley and Bundaberg",
+      "regionId": "qld"
+    },
+    {
+      "id": "manjimup-jindong",
+      "name": "Manjimup / Jindong",
+      "regionId": "wa"
+    },
+    {
+      "id": "riverina-tablelands-coast",
+      "name": "Riverina, Tablelands, Coast",
+      "regionId": "nsw"
+    }
+  ]
+}

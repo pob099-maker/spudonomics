@@ -1,11 +1,12 @@
 # Spudonomics
 
-Regional potato gross margin baselines for Australia. Pick a region and market
+Regional potato gross margin baselines for Australia. Pick a district and market
 segment, see what the published budget actually reports, then edit any figure to
-model your own costs.
+model your own costs. The Areas page reads the same budgets by AgAims area
+and shows where the evidence is thin.
 
-Built for PotatoLink and the Lifecycles project. Sister project to
-[PotatoLink Fieldwork](https://github.com/pob099-maker/potatolink-fieldwork).
+Built for AgAims and the Lifecycles project. Sister project to
+AgAims Fieldwork.
 
 ## The point
 
@@ -29,7 +30,7 @@ Then <http://localhost:5190>.
 
 ## The data
 
-Fourteen regions and thirty-two published budgets live in `src/data/` as JSON,
+Fourteen districts and thirty-two published budgets live in `src/data/` as JSON,
 in version control rather than a database. They are validated against Zod
 schemas by the test suite, so a mistyped figure fails CI instead of reaching a
 reader — and every change to a number arrives with an author, a date and a diff.
@@ -57,9 +58,9 @@ you are saying you do not carry.
 
 This matters more than it sounds. The prototype this replaces summed the
 itemised lines and treated every missing line as zero, which overstated the
-gross margin on eight of the fourteen regions:
+gross margin on eight of the fourteen districts:
 
-| Region | Prototype | Published source |
+| District | Prototype | Published source |
 | --- | --- | --- |
 | SA — Virginia / Riverland / Limestone Coast | $13,625/ha | $1,438/ha |
 | WA — Perth / Myalup | $19,400/ha | $7,900/ha |

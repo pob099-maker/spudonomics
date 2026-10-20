@@ -52,5 +52,5 @@ Two things to be careful about:
   Australian ones from 2005 data. The app says so on every screen. A commercial
   version would need them refreshed, which is field work rather than coding.
 
-The branding is PotatoLink — palette in `src/index.css`, the potato mark in
-`Layout.tsx`, the descriptor in the header — and would need removing.
+The branding is AgAims — palette in `src/index.css`, the AgAims mark in
+`src/assets/agaims-mark.png` and `Layout.tsx` — and would need replacing.
