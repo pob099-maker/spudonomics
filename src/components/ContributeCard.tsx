@@ -73,7 +73,7 @@ export function ContributeCard() {
     setCopyFailed(false);
     if (await copyText(surveyUrl)) {
       setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+      setTimeout(() => setCopied(false), 4000);
       return;
     }
     // Some tablets and in-app browsers (a link opened from an email or Teams)
@@ -156,11 +156,20 @@ export function ContributeCard() {
         <button
           type="button"
           onClick={copyLink}
-          className="min-h-11 rounded-lg border border-ink/20 px-3 text-sm font-medium dark:border-ink-dark/20"
+          className={`min-h-11 rounded-lg border px-3 text-sm font-medium ${
+            copied
+              ? "border-success bg-success text-white"
+              : "border-ink/20 dark:border-ink-dark/20"
+          }`}
         >
-          {copied ? "Link copied" : "Copy link to share"}
+          {copied ? "✓ Link copied" : "Copy link to share"}
         </button>
       </div>
+      {copied ? (
+        <p role="status" className="mt-2 text-sm font-medium text-success">
+          Link copied to your clipboard. Paste it into an email or message.
+        </p>
+      ) : null}
       {copyFailed ? (
         <p role="status" className="mt-2 text-sm text-warning">
           Couldn't copy automatically. The link below is selected: press and hold (or Ctrl+C)
